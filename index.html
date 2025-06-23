@@ -8,24 +8,89 @@
 </head>
 
 <style>
-    *{ 
+    * {
         margin: 0;
         top: 0;
     }
+
     .Container {
-        /* height: 100vh; */
+        height: 100vh;
+        width: 100%;
         /* background-color: aqua; */
+        /* overflow: scroll; */
+        /* padding: 10px; */
+    }
+
+    .canva {
+        /* padding: 10px; */
+        overflow: hidden;
+    }
+
+    .RowResize {
+        width: 20px;
+        height: 100%;
+        background-color: grey;
+    }
+
+    .ColumnResize {
+        width: 100%;
+        height: 20px;
+        background-color: lightblue;
+    }
+
+    .Container {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .resizeElmRow {
+        resize: both;
+        overflow: auto;
+        width: 100%;
+        border: 2px solid black;
+    }
+
+    .resizeElmCol {
+        resize: both;
+        /* overflow: auto; */
+        height: 100%;
+        border: 2px solid black
+    }
+
+    .canvaManager {
+        overflow: auto;
+        overflow-y: scroll;
+        overflow-x: scroll;
+        position: relative;
+    }
+
+    .InnerContiner {
+        height: 100%;
+        width: 100%;
+    }
+
+    .canvaManagerContainer {
         overflow: scroll;
-        padding: 10px;
+        width: 95vw;
+        height: 100vh;
     }
 </style>
 
 <body>
     <div class="Container">
-        <canvas class="canva" id="canvasContainer">
+        <div class="RowResize" id="RowResize">
+        </div>
+        <div class="InnerContiner">
+            <div class="ColumnResize" id="ColumnResize"> </div>
+            <div class="canvaManagerContainer" id="canvaManagerContainer">
+                <div class="canvaManager" id="canvaManager">
+                </div>
+            </div>
 
-        </canvas>
+        </div>
+
     </div>
 </body>
 <script src="./index.js"> </script>
+
 </html>
