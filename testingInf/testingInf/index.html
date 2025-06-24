@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+</head>
+<style>
+    #viewport {
+        width: 800px;
+        height: 600px;
+        overflow: scroll;
+        position: relative;
+        border: 2px solid #333;
+    }
+
+    #content {
+        width: 5000px;
+        height: 3000px;
+        position: relative;
+    }
+
+    .cell {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        box-sizing: border-box;
+        border: 1px solid #222;
+    }
+</style>
+
+<body>
+    <div id="viewport">
+        <div id="content"></div>
+    </div>
+
+
+</body>
+<script src="./index.js"></script>
+
+</html>

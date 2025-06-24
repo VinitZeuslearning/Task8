@@ -11,6 +11,7 @@
     * {
         margin: 0;
         top: 0;
+        padding: 0;
     }
 
     .Container {
@@ -21,21 +22,20 @@
         /* padding: 10px; */
     }
 
-    .canva {
-        /* padding: 10px; */
-        overflow: hidden;
-    }
-
     .RowResize {
         width: 20px;
         height: 100%;
         background-color: grey;
+        position: absolute;
+        z-index: 1;
     }
 
     .ColumnResize {
         width: 100%;
         height: 20px;
         background-color: lightblue;
+        position: absolute;
+        z-index: 1;
     }
 
     .Container {
@@ -43,50 +43,46 @@
         flex-direction: row;
     }
 
-    .resizeElmRow {
-        resize: both;
-        overflow: auto;
-        width: 100%;
-        border: 2px solid black;
-    }
-
-    .resizeElmCol {
-        resize: both;
-        /* overflow: auto; */
-        height: 100%;
-        border: 2px solid black
-    }
-
     .canvaManager {
-        overflow: auto;
-        overflow-y: scroll;
-        overflow-x: scroll;
-        position: relative;
+        /* overflow: auto; */
+        height: 100vh;
+        width: 100%;
+        background: #ddd;
+        white-space: nowrap;
+    }
+
+    .testElms {
+        height: 500px;
+        width: 500px;
+        background-color: bisque;
+        display: inline-block;
+        margin: 2px;
     }
 
     .InnerContiner {
         height: 100%;
         width: 100%;
+        overflow: scroll;
+        position: relative;
     }
-
-    .canvaManagerContainer {
+    canvas {
+        position: absolute;
+    }
+    /* .canvaManagerContainer {
         overflow: scroll;
         width: 95vw;
         height: 100vh;
-    }
+    } */
 </style>
 
 <body>
     <div class="Container">
         <div class="RowResize" id="RowResize">
         </div>
-        <div class="InnerContiner">
-            <div class="ColumnResize" id="ColumnResize"> </div>
-            <div class="canvaManagerContainer" id="canvaManagerContainer">
-                <div class="canvaManager" id="canvaManager">
-                </div>
+        <div class="ColumnResize" id="ColumnResize"> </div>
+        <div class="InnerContiner" id="InnerContiner">
+            <div class="canvaManager" id="canvaManager">
             </div>
-
         </div>
 
     </div>
