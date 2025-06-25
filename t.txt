@@ -1,0 +1,3 @@
+how excel do that means as there so many canvas are maintian then what we need to do if we need to build the resizable row and column , as we need to position all the canva as we scroll we need the top and left for each canva and for that we require the prefix sum of all canva height and width 
+
+so problem is if there are so many rows then each single change of the rows can cause the whole prefix sum array change , so how excel handle that ?
