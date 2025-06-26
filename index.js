@@ -2,74 +2,74 @@
 
 
 class CnvRcManager {
-  constructor(size, defaultValue) {
-    this.size = size;
-    this.defaultValue = defaultValue;
-    this.values = new Map();           // Sparse storage
+    constructor(size, defaultValue) {
+        this.size = size;
+        this.defaultValue = defaultValue;
+        this.values = new Map();           // Sparse storage
 
-    this.prefixSum = new Array( size);
-    this.rebuildPrefixSum();
-  }
-
-  rebuildPrefixSum() {
-    this.prefixSum[0] = 0;
-    for (let i = 1; i < this.size; i++) {
-      this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i);
+        this.prefixSum = new Array(size);
+        this.rebuildPrefixSum();
     }
-  }
 
-  update(index, newValue) {
-    if (newValue === this.defaultValue) {
-      this.values.delete(index);
-    } else {
-      this.values.set(index, newValue);
+    rebuildPrefixSum() {
+        this.prefixSum[0] = 0;
+        for (let i = 1; i < this.size; i++) {
+            this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i);
+        }
     }
-    for (let i = index; i < this.size; i++) {
-      if (i === 0) this.prefixSum[i] = this.getValue(i);
-      else this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i);
+
+    update(index, newValue) {
+        if (newValue === this.defaultValue) {
+            this.values.delete(index);
+        } else {
+            this.values.set(index, newValue);
+        }
+        for (let i = index; i < this.size; i++) {
+            if (i === 0) this.prefixSum[i] = this.getValue(i);
+            else this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i);
+        }
     }
-  }
 
-  getValue(index) {
-    return this.values.has(index) ? this.values.get(index) : this.defaultValue;
-  }
+    getValue(index) {
+        return this.values.has(index) ? this.values.get(index) : this.defaultValue;
+    }
 
-  getPrefixSum() {
-    return this.prefixSum;
-  }
+    getPrefixSum() {
+        return this.prefixSum;
+    }
 
-  getPrefVal( index ) {
-    return this.prefixSum[ index ];
-  }
+    getPrefVal(index) {
+        return this.prefixSum[index];
+    }
 
-  getSumUpto(index) {
-    return this.prefixSum[index];
-  }
+    getSumUpto(index) {
+        return this.prefixSum[index];
+    }
 }
 
 
 
 
 class RCManager {
-  constructor(number, defaultUnit, numberPerCanva) {
-    this.size = number;
-    this.defaultUnit = defaultUnit;
-    this.numberPerCanva;
-    this.values = new Map();
-    this.cnvdM = new CnvRcManager( Math.ceil( number / numberPerCanva ), defaultUnit * numberPerCanva);
-  }
-
-  update(index, newValue) {
-    if (newValue === this.defaultUnit) {
-      this.values.delete(index);
-    } else {
-      this.values.set(index, newValue);
+    constructor(number, defaultUnit, numberPerCanva) {
+        this.size = number;
+        this.defaultUnit = defaultUnit;
+        this.numberPerCanva;
+        this.values = new Map();
+        this.cnvdM = new CnvRcManager(Math.ceil(number / numberPerCanva), defaultUnit * numberPerCanva);
     }
-  }
 
-  getValue(index) {
-    return this.values.has(index) ? this.values.get(index) : this.defaultUnit;
-  }
+    update(index, newValue) {
+        if (newValue === this.defaultUnit) {
+            this.values.delete(index);
+        } else {
+            this.values.set(index, newValue);
+        }
+    }
+
+    getValue(index) {
+        return this.values.has(index) ? this.values.get(index) : this.defaultUnit;
+    }
 }
 
 
@@ -160,6 +160,35 @@ class RowLabelCanva {
             this.ctx.fillText((this.rowCountStart + r).toString(), this.ctx.canvas.width / 2, y + rowHeight / 2);
         }
     }
+    mouseDownDistanceHandler(e) {
+        const canvas = e.target;
+        const rect = canvas.getBoundingClientRect();
+
+        const startX = e.clientX - rect.left;
+        const startY = e.clientY - rect.top;
+
+        // Set resize cursor on mousedown
+        canvas.style.cursor = 'ew-resize';
+
+        function onMouseUp(ev) {
+            const endX = ev.clientX - rect.left;
+            const endY = ev.clientY - rect.top;
+
+            const dx = endX - startX;
+            const dy = endY - startY;
+
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            console.log(`Mouse moved: ${distance}px`);
+
+            // Revert cursor to default on mouseup
+            canvas.style.cursor = 'default';
+
+            window.removeEventListener('mouseup', onMouseUp);
+        }
+
+        window.addEventListener('mouseup', onMouseUp);
+    }
+
 
     initialize(rowNumber, height, width, rowCountStart) {
         this.rowNumber = rowNumber;
@@ -514,9 +543,9 @@ class CanvasManager {
                 continue;
             }
             top = this.rowM.cnvdM.getPrefVal(row);
-            
+
             // creating the instance of the canva
-            let elm = this.cnvInstCreater( row, col );
+            let elm = this.cnvInstCreater(row, col);
             this.canvaMagnagerElm.append(elm._canva);
             elm._initialize(this.cellHeight, this.cellWidth, this.rowsPerCanva, this.colsPerCanva);
         }
@@ -553,8 +582,8 @@ class CanvasManager {
 
             // creating canva instance and initilizing it
 
-            let elm = this.cnvInstCreater( row, col );
-            
+            let elm = this.cnvInstCreater(row, col);
+
             elm._initialize(this.cellHeight, this.cellWidth, this.rowsPerCanva, this.colsPerCanva);
         }
 
@@ -623,15 +652,15 @@ class CanvasManager {
         this.canvaMagnagerElm.innerHTML = "";
     }
 
-    cnvInstCreater( row , col ) {
+    cnvInstCreater(row, col) {
         let inst = new Canva();
         this.canvaMagnagerElm.append(inst._canva);
         inst.masterWobj = this.colM;
         inst.masterHobj = this.rowM;
-        inst.canvaHeight = this.rowM.cnvdM.getValue( row );
-        inst.canvaWidth = this.colM.cnvdM.getValue( col );
-        inst._canva.style.top = this.rowM.cnvdM.getPrefVal( row ) + this.colLabelCanvaH + "px";
-        inst._canva.style.left = this.colM.cnvdM.getPrefVal( col ) + this.rowLabelCanvaW +  "px";
+        inst.canvaHeight = this.rowM.cnvdM.getValue(row);
+        inst.canvaWidth = this.colM.cnvdM.getValue(col);
+        inst._canva.style.top = this.rowM.cnvdM.getPrefVal(row) + this.colLabelCanvaH + "px";
+        inst._canva.style.left = this.colM.cnvdM.getPrefVal(col) + this.rowLabelCanvaW + "px";
         inst._canva.id = row + "_" + col;
         inst._dataStg = new DataStorage();
 
