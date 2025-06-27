@@ -1,429 +1,20 @@
 // import RCManager from "./rcManager";
+import TwoLevelMap from "./twolevelmap.js";
+import RCManager from "./DataStructure/RmCnvManager.js";
+import RowLabelCanva from "./Canvas/RowLabelCanva.js";
+import ColLabelCanva from "./Canvas/ColLabelCanva.js";
 
+import Canva from "./Canvas/DataCanvas.js";
+/*
+what to do next 
 
-class CnvRcManager {
-    constructor(size, defaultValue) {
-        this.size = size;
-        this.defaultValue = defaultValue;
-        this.values = new Map();           // Sparse storage
+1) add one render method in the canvamanger which just render the all canva without creating new instance 
+2) pass the proepr parameter to the label class and also pass the handler which will be called when the resizing hapening 
+3) also need to add the way to maintain the canva instance in canvamanager for canva which are visible . Just maintain the array of size of exactly same as the this.lowerbound - this.upperbound for row , col , rowLable and colLabel
 
-        this.prefixSum = new Array(size);
-        this.rebuildPrefixSum();
-    }
 
-    rebuildPrefixSum() {
-        this.prefixSum[0] = 0;
-        for (let i = 1; i < this.size; i++) {
-            this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i);
-        }
-    }
+*/
 
-    update(index, newValue) {
-        if (newValue === this.defaultValue) {
-            this.values.delete(index);
-        } else {
-            this.values.set(index, newValue);
-        }
-        for (let i = index; i < this.size; i++) {
-            if (i === 0) this.prefixSum[i] = this.getValue(i);
-            else this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i);
-        }
-    }
-
-    getValue(index) {
-        return this.values.has(index) ? this.values.get(index) : this.defaultValue;
-    }
-
-    getPrefixSum() {
-        return this.prefixSum;
-    }
-
-    getPrefVal(index) {
-        return this.prefixSum[index];
-    }
-
-    getSumUpto(index) {
-        return this.prefixSum[index];
-    }
-}
-
-
-
-
-class RCManager {
-    constructor(number, defaultUnit, numberPerCanva) {
-        this.size = number;
-        this.defaultUnit = defaultUnit;
-        this.numberPerCanva;
-        this.values = new Map();
-        this.cnvdM = new CnvRcManager(Math.ceil(number / numberPerCanva), defaultUnit * numberPerCanva);
-    }
-
-    update(index, newValue) {
-        if (newValue === this.defaultUnit) {
-            this.values.delete(index);
-        } else {
-            this.values.set(index, newValue);
-        }
-    }
-
-    getValue(index) {
-        return this.values.has(index) ? this.values.get(index) : this.defaultUnit;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-//**************************************************************************************************** */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class RowLabelCanva {
-    constructor() {
-        this.rowCountStart = 0;
-        this.height = 0;
-        this.width = 0;
-        this.rowNumber = 0;
-        this._canvaElm = document.createElement('canvas');
-        this.ctx = this._canvaElm.getContext('2d');
-        this._canvaElm.style.zIndex = 2;
-    }
-
-    render() {
-        this._canvaElm.style.height = this.height + "px";
-        this._canvaElm.style.width = this.width + "px";
-        adjustCanvasDPI(this._canvaElm, this.ctx);
-        this.ctx.clearRect(0, 0, this._canvaElm.width, this._canvaElm.height);
-        this.ctx.fillStyle = '#f0f0f0';
-        this.ctx.fillRect(0, 0, this._canvaElm.width, this._canvaElm.height);
-        this.ctx.strokeStyle = '#ccc';
-        this.ctx.font = '12px sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillStyle = '#000';
-        let rowHeight = this.height / this.rowNumber;
-        for (let r = 0; r < this.rowNumber; r++) {
-            const y = r * rowHeight;
-            this.ctx.strokeRect(0, y, this.ctx.canvas.width, rowHeight);
-            this.ctx.fillText((this.rowCountStart + r).toString(), this.ctx.canvas.width / 2, y + rowHeight / 2);
-        }
-    }
-    mouseDownDistanceHandler(e) {
-        const canvas = e.target;
-        const rect = canvas.getBoundingClientRect();
-
-        const startX = e.clientX - rect.left;
-        const startY = e.clientY - rect.top;
-
-        // Set resize cursor on mousedown
-        canvas.style.cursor = 'ew-resize';
-
-        function onMouseUp(ev) {
-            const endX = ev.clientX - rect.left;
-            const endY = ev.clientY - rect.top;
-
-            const dx = endX - startX;
-            const dy = endY - startY;
-
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            console.log(`Mouse moved: ${distance}px`);
-
-            // Revert cursor to default on mouseup
-            canvas.style.cursor = 'default';
-
-            window.removeEventListener('mouseup', onMouseUp);
-        }
-
-        window.addEventListener('mouseup', onMouseUp);
-    }
-
-
-    initialize(rowNumber, height, width, rowCountStart) {
-        this.rowNumber = rowNumber;
-        this.height = height;
-        this.width = width;
-        this.rowCountStart = rowCountStart;
-        this.render();
-
-    }
-}
-
-class ColLabelCanva {
-    constructor() {
-        this.colCountStart = "A";
-        this.height = 25;
-        this.width = 100;
-        this.colNumber = 0;
-        this._canvaElm = document.createElement('canvas');
-        this.ctx = this._canvaElm.getContext('2d');
-        this._canvaElm.style.zIndex = 2;
-    }
-
-    render() {
-        this._canvaElm.style.height = this.height + "px";
-        this._canvaElm.style.width = this.width + "px";
-        adjustCanvasDPI(this._canvaElm, this.ctx);
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-        this.ctx.fillStyle = '#f0f0f0';
-        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-        this.ctx.strokeStyle = '#ccc';
-        this.ctx.font = '12px sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillStyle = '#000';
-
-        let colWidth = this.width / this.colNumber;
-        let label = this.colCountStart;
-        for (let c = 0; c < this.colNumber; c++) {
-            const x = c * colWidth;
-            label = this.getNextColumnLabel(label);
-            this.ctx.strokeRect(x, 0, colWidth, this.ctx.canvas.height);
-            this.ctx.fillText(label, x + colWidth / 2, this.ctx.canvas.height / 2);
-        }
-    }
-    static getColumnLabelFromNumber(num) {
-        let label = '';
-        while (num > 0) {
-            num--; // adjust because Excel is 1-based
-            label = String.fromCharCode(65 + (num % 26)) + label;
-            num = Math.floor(num / 26);
-        }
-        return label;
-    }
-
-    initialize(colNumber, height, width, colCountStartNumber = 0) {
-        this.colNumber = colNumber;
-        this.height = height;
-        this.width = width;
-        this.colCountStart = ColLabelCanva.getColumnLabelFromNumber(colCountStartNumber);
-        this.render();
-    }
-
-    getNextColumnLabel(colLabel) {
-        let carry = 1;
-        let result = '';
-
-        for (let i = colLabel.length - 1; i >= 0; i--) {
-            const charCode = colLabel.charCodeAt(i) - 65;
-            const sum = charCode + carry;
-            if (sum === 26) {
-                result = 'A' + result;
-                carry = 1;
-            } else {
-                result = String.fromCharCode(65 + sum) + result;
-                carry = 0;
-            }
-        }
-        if (carry === 1) result = 'A' + result;
-        return result;
-    }
-
-    getCanvasElement() {
-        return this._canvaElm;
-    }
-}
-
-
-class Canva {
-    constructor() {
-        this._dataStg = null;
-        this.celldt = null;
-        this._parent = document.getElementById('canvaManager');
-        this._canva = document.createElement('canvas');
-        this.ctx = this._canva.getContext('2d');
-        this.currRow = -1;
-        this.currCol = -1;
-        this.fontSize = 10;
-        this.rowsHeight;
-        this.colswidth;
-        this.canvaHeight = 0;
-        this.canvaWidth = 0;
-        this.cellHeight = 0;
-        this.cellWidth = 0;
-        this.rowNumber = 0;
-        this.colNumber = 0;
-        this.masterHobj = null;
-        this.masterWobj = null;
-    }
-
-    adjustCanvasDPI() {
-        const dpr = window.devicePixelRatio || 1;
-        const cssWidth = this._canva.clientWidth;
-        const cssHeight = this._canva.clientHeight;
-
-        // Set the internal pixel size of the canvas
-        this._canva.width = cssWidth * dpr;
-        this._canva.height = cssHeight * dpr;
-
-        // Set the CSS size so it stays visually the same size on screen
-        this._canva.style.width = `${cssWidth}px`;
-        this._canva.style.height = `${cssHeight}px`;
-
-        // this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.ctx.scale(dpr, dpr);
-    }
-
-    static performBinarySearch(arr, num) {
-        if (num > arr[arr.length - 1] || num < arr[0]) {
-            return -1;
-        }
-        let i = 0;
-        let j = arr.length - 1;
-
-
-        let mid;
-        while (i < j) {
-            mid = Math.ceil(i + ((j - i) / 2));
-
-            if (arr[mid] > num) {
-                j = mid - 1;
-            }
-            else {
-                i = mid;
-            }
-        }
-        return i;
-    }
-
-    render() {
-        // this._parent.appendChild(this._canva);s
-        this.adjustCanvasDPI();
-        let height = this.canvaHeight;
-        let width = this.canvaWidth;
-
-        this.ctx.lineWidth = 0.5;
-        this.ctx.save();
-        this.ctx.translate(0.5, 0.5);
-
-        // Draw horizontal grid lines (rows)
-        let y = 0;
-        let ind;
-        this.ctx.font = `${this.fontSize}px  'Courier New', monospace`;
-
-        for (ind = 0; ind <= this.rowNumber; ind++) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(width, y);
-            this.ctx.stroke();
-            // y += this.cellHeight;
-            y += this.masterHobj.getValue(ind);
-        }
-
-        // Draw vertical grid lines (columns)
-        let x = 0;
-        for (ind = 0; ind <= this.colNumber; ind++) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, height);
-            this.ctx.stroke();
-            // x += this.cellWidth;
-            x += this.masterWobj.getValue(ind);
-        }
-
-        // to jump from the border;
-        this.ctx.translate(0.5, 0.5);
-
-        // filling text
-        x = this.cellWidth / 2;
-        y = this.cellHeight / 2 + 1;
-        this.ctx.textAlign = "center";
-        let charWidth = this.ctx.measureText("W").width;
-        for (let r = 0; r < this.rowNumber; r++) {
-            x = this.cellWidth / 2;
-            for (let c = 0; c < this.colNumber; c++) {
-                let tmp = " ";
-                tmp = tmp.slice(0, (this.cellWidth / charWidth) - 2);
-                this.ctx.fillText(tmp, x, y);
-                x += this.cellWidth;
-            }
-            y += this.cellHeight;
-        }
-
-        this.ctx.restore()
-
-    }
-
-    changeVal(r, c, val) {
-        // Value-changing logic here
-    }
-
-    _initialize(cellHeight = 20, cellWidth = 100, rowNumber = 0, colNumber = 0) {
-
-        // this._canva.addEventListener('click', (e) => {
-        //     this.rowColHandler(e.clientX, e.clientY);
-        // });
-
-        this.cellHeight = cellHeight;
-        this.cellWidth = cellWidth;
-        this.rowNumber = rowNumber;
-        this.colNumber = colNumber;
-        // this.canvaHeight = this.cellHeight * this.rowNumber + 1;
-        // this.canvaWidth = this.cellWidth * this.colNumber + 1;
-
-        let rect = this._canva.getBoundingClientRect();
-        this.canvaLeft = rect.left;
-        this.canvaRight = rect.right;
-        this.canvaTop = rect.top;
-        this.canvaBottom = rect.bottom;
-
-        this._canva.style.height = this.canvaHeight + "px";
-        this._canva.style.width = this.canvaWidth + "px";
-
-        this.render();
-    }
-}
 
 
 
@@ -447,24 +38,29 @@ class CanvasManager {
         this.cellHeight = 20;
         this.rowsPerCanva = 20;
         this.colsPerCanva = 8;
+        this.extraCanva = 1;
         this.elmsPerCava = this.rowsPerCanva * this.colsPerCanva;
         this.canvaMagnagerElm = document.getElementById('canvaManager');
         this.viewPort = document.getElementById('InnerContiner');
         this.viewPortRect = this.viewPort.getBoundingClientRect();
         this.canvaH = this.rowsPerCanva * this.cellHeight;
         this.canvaW = this.colsPerCanva * this.cellWidth;
-        this.canvasHorizontal = (Math.ceil(this.viewPortRect.width / this.canvaW));
-        this.canvasVertical = (Math.ceil(this.viewPortRect.height / this.canvaH));
+        this.canvasHorizontal = (Math.ceil(this.viewPortRect.width / this.canvaW)) + this.extraCanva;
+        this.canvasVertical = (Math.ceil(this.viewPortRect.height / this.canvaH)) + this.extraCanva;
         this.scrollTop = 0;
         this.scrollLeft = 0;
         this.viewPortHeight = this.viewPortRect.height;
         this.viewPortWidth = this.viewPortRect.width;
         this.height = this.rows * this.cellHeight;
         this.width = this.cols * this.cellWidth;
-        this.extraCanva = 1;
         this.totalCanvaVer = this.rows / this.rowsPerCanva;
         this.totalCanvaHor = this.cols / this.colsPerCanva;
+        this.cnvInst = new TwoLevelMap();
+        this.colCnvLabelInst = new Map();
+        this.rowCnvLabelInst = new Map();
 
+        this.totalActiveCanvasRow;
+        this.totalActiveCanvasCol;
         // vertical delta change for smooth scroll
         this.verDxForSmthScroll = 400;
 
@@ -485,10 +81,85 @@ class CanvasManager {
 
         this._render = true;
 
-        this.rowM = new RCManager(this.rows, this.cellHeight, this.rowsPerCanva);
-        this.colM = new RCManager(this.cols, this.cellWidth, this.colsPerCanva);
+        this.rowM = new RCManager(this.rows, this.cellHeight, this.rowsPerCanva, this.rowLabelCanvaW);
+        this.colM = new RCManager(this.cols, this.cellWidth, this.colsPerCanva, this.colLabelCanvaH);
 
         this._isInstantRenderRequire = true;
+    }
+
+    resizingHandler(obj) {
+        let tmp;
+        let i;
+        let j;
+        if (obj.canvaRow != undefined) {
+
+            // tmp = this.rowM.cnvdM.getValue(obj.row)
+            // this.rowM.cnvdM.update(obj.row, tmp + obj.extra);
+
+
+            // this will auto update the canva prefix and size
+            let row = ( obj.canvaRow * this.rowsPerCanva ) + obj.rowNumber 
+            tmp = this.rowM.getValue( row );
+            this.rowM.incre( row, obj.extra );
+
+            // changing top of every element 
+
+            for (let i = obj.canvaRow + 1; i <= this.cnvRowUprBnd; i++) {
+                for (let j = Math.max( this.cnvColLwrBnd, 0 ); j <= this.cnvColUprBnd; j++) {
+                    tmp = this.cnvInst.get(i, j);
+                    tmp._canva.style.top = this.rowM.cnvdM.getPrefVal(i) + "px";
+                }
+            }
+            
+
+            for (let i = Math.max( this.cnvColLwrBnd, 0 ); i <= this.cnvColUprBnd; i++) {
+                tmp = this.cnvInst.get( obj.canvaRow , i);
+                // rendering the canva
+                tmp.render();
+
+                tmp = this.rowCnvLabelInst.get( i );
+                if ( !tmp ) {
+                    continue;
+                }
+                tmp.render()
+            }
+
+        }
+        else {
+            let col = ( obj.canvaCol * this.colsPerCanva ) + obj.colNumber 
+            tmp = this.colM.getValue( col );
+            this.colM.update( col, tmp + obj.extra );
+
+            for ( let j = obj.col + 1; j <= this.cnvColUprBnd; j++ ) {
+                for ( let i = Math.max( this.cnvRowLwrBnd, 0 ); i <= this.cnvRowUprBnd; i++ ) {
+                    tmp = this.cnvInst.get( i, j );
+                    tmp._canva.style.left = this.colM.cnvdM.getPrefVal( j ) + "px";
+                }
+            }
+
+            for ( let i = Math.max( this.cnvRowLwrBnd, 0 ); i <= this.cnvRowLwrBnd; i++ ) {
+                tmp = this.cnvInst.get( i, obj.col );
+                tmp.render();
+                tmp = this.colCnvLabelInst.get( i );
+                 if ( !tmp ) {
+                    continue;
+                }
+                tmp.render()
+            }
+        }
+    }
+
+    renderAll() {
+        // repaint
+        for (const [key, value] of this.cnvInst) {
+            value.render();
+        }
+        for (const [key, value] of this.colCnvLabelInst) {
+            value.render();
+        }
+        for (const [key, value] of this.rowCnvLabelInst) {
+            value.render();
+        }
     }
 
     removeRow(r, isLabel = true) {
@@ -499,6 +170,7 @@ class CanvasManager {
         let col = this.cnvColLwrBnd;
         for (; col <= this.cnvColUprBnd; col++) {
             let elm = document.getElementById(`${row}_${col}`);
+            this.cnvInst.delete(row, col);
             if (elm) {
                 this.canvaMagnagerElm.removeChild(elm);
             }
@@ -509,6 +181,7 @@ class CanvasManager {
         }
     }
 
+
     removeCol(c, isLabel = true) {
         if (c < 0 || c >= this.totalCanvaHor) {
             return;
@@ -518,6 +191,8 @@ class CanvasManager {
 
         for (; row <= this.cnvRowUprBnd; row++) {
             let elm = document.getElementById(`${row}_${col}`);
+            // this.colCnvLabelInst.delete( row, col );
+            this.cnvInst.delete(row, col);
             if (elm) {
                 this.canvaMagnagerElm.removeChild(elm);
             }
@@ -595,30 +270,41 @@ class CanvasManager {
     appendRowLabel(r) {
         if (document.getElementById("R" + r)) { return }
         let labelElm = new RowLabelCanva();
-        this.canvaMagnagerElm.append(labelElm._canvaElm);
-        labelElm._canvaElm.id = "R" + r;
-        labelElm._canvaElm.style.left = this.scrollLeft + "px";
-        labelElm._canvaElm.style.top = r * this.canvaH + this.colLabelCanvaH + "px";
+        labelElm.parentRef = this;
+        labelElm.canvaRowNumber = r;
+        labelElm.resizingHandler = this.resizingHandler;
+        this.rowCnvLabelInst.set(r, labelElm);
+        labelElm._canva.style.left = this.scrollLeft + "px";
+        labelElm._canva.style.top = this.rowM.cnvdM.getPrefVal( r ) + "px";
+        labelElm.rowMobj = this.rowM;
+        labelElm.rowNumber = (r + 1) * this.rowsPerCanva;
+        this.canvaMagnagerElm.append(labelElm._canva);
+        labelElm._canva.id = "R" + r;
         labelElm.initialize(this.rowsPerCanva, this.canvaH, this.rowLabelCanvaW, r * this.rowsPerCanva);
     }
 
     appendColLabel(c) {
         if (document.getElementById("C" + c)) { return }
         let labelElm = new ColLabelCanva();
-        this.canvaMagnagerElm.append(labelElm._canvaElm);
-        labelElm._canvaElm.id = "C" + c;
-        labelElm._canvaElm.style.top = this.scrollTop + "px";
-        labelElm._canvaElm.style.left = c * this.canvaW + this.rowLabelCanvaW + "px";
+        this.colCnvLabelInst.set(c, labelElm);
+        this.canvaMagnagerElm.append(labelElm._canva);
+        labelElm._canva.id = "C" + c;
+        labelElm._canva.style.top = this.scrollTop + "px";
+        labelElm._canva.style.left = this.colM.cnvdM.getPrefVal(c) + "px";
         labelElm.initialize(this.colsPerCanva, this.colLabelCanvaH, this.canvaW, c * this.colsPerCanva)
     }
 
     removeRowLabel(r) {
         let elm = document.getElementById("R" + r);
+        if (!elm) { return }
+        this.rowCnvLabelInst.delete(r);
         this.canvaMagnagerElm.removeChild(elm);
     }
 
     removeColLabel(c) {
         let elm = document.getElementById("C" + c);
+        if (!elm) { return }
+        this.colCnvLabelInst.delete(c);
         this.canvaMagnagerElm.removeChild(elm);
     }
 
@@ -654,13 +340,18 @@ class CanvasManager {
 
     cnvInstCreater(row, col) {
         let inst = new Canva();
+        // this.rowCavaInstance
+
+        this.cnvInst.insert(row, col, inst);
         this.canvaMagnagerElm.append(inst._canva);
         inst.masterWobj = this.colM;
+        inst.canvaRowIndex = row;
+        inst.canvaColIndex = col;
         inst.masterHobj = this.rowM;
         inst.canvaHeight = this.rowM.cnvdM.getValue(row);
         inst.canvaWidth = this.colM.cnvdM.getValue(col);
-        inst._canva.style.top = this.rowM.cnvdM.getPrefVal(row) + this.colLabelCanvaH + "px";
-        inst._canva.style.left = this.colM.cnvdM.getPrefVal(col) + this.rowLabelCanvaW + "px";
+        inst._canva.style.top = this.rowM.cnvdM.getPrefVal(row)  + "px";
+        inst._canva.style.left = this.colM.cnvdM.getPrefVal(col)  + "px";
         inst._canva.id = row + "_" + col;
         inst._dataStg = new DataStorage();
 
@@ -681,9 +372,9 @@ class CanvasManager {
         let verInd = Math.trunc(scrollTop / this.canvaH);
 
         this.cnvColLwrBnd = horInd - this.extraCanva;
-        this.cnvColUprBnd = horInd + this.canvasHorizontal + this.extraCanva - 1;
+        this.cnvColUprBnd = horInd + this.canvasHorizontal - 1;
         this.cnvRowLwrBnd = verInd - this.extraCanva;
-        this.cnvRowUprBnd = verInd + this.canvasVertical + this.extraCanva - 1;
+        this.cnvRowUprBnd = verInd + this.canvasVertical - 1;
 
         this.clearChilds();
         if (flage == 1 || flage == 2) {
@@ -696,16 +387,15 @@ class CanvasManager {
         for (j = this.cnvColLwrBnd; j <= this.cnvColUprBnd; j++) {
             if (flage == 0 || flage == 2) {
                 this.appendCol(j, true);
-                this.appendCol(j, true);
             }
         }
         for (j = this.cnvRowLwrBnd; j <= this.cnvRowUprBnd; j++) {
             if (flage == 1 || flage == 2) {
                 this.appendRow(j, true);
-                this.appendRow(j, true);
             }
         }
         this._isInstantRenderRequire = false;
+
     }
 
     smoothScrollRender(isVerticalMove) {
@@ -721,15 +411,15 @@ class CanvasManager {
             if (horInd >= 1) {
                 console.log();
             }
-            if ((horInd + this.canvasHorizontal + this.extraCanva) > this.cnvColUprBnd + 1) {
+            if ((horInd + this.canvasHorizontal) > this.cnvColUprBnd + 1) {
                 this.removeCol(this.cnvColLwrBnd, true);
-                this.cnvColUprBnd = horInd + this.canvasHorizontal + this.extraCanva - 1;
+                this.cnvColUprBnd = horInd + this.canvasHorizontal - 1;
                 this.cnvColLwrBnd = horInd - this.extraCanva;
                 this.appendCol(this.cnvColUprBnd, true);
             }
             else if (horInd - this.extraCanva < this.cnvColLwrBnd) {
                 this.removeCol(this.cnvColUprBnd);
-                this.cnvColUprBnd = horInd + this.canvasHorizontal + this.extraCanva - 1;;
+                this.cnvColUprBnd = horInd + this.canvasHorizontal - 1;;
                 this.cnvColLwrBnd = horInd - this.extraCanva;
                 this.appendCol(this.cnvColLwrBnd);
             }
@@ -807,7 +497,15 @@ class CanvasManager {
         })
         this.canvaMagnagerElm.style.height = this.height + "px";
         this.canvaMagnagerElm.style.width = this.width + "px";
+        this.rowM.numberPerCanva = this.rowsPerCanva;
+        this.colM.numberPerCanva = this.colsPerCanva;
+        this.rowM.defaultUnit = this.cellHeight;
+        this.colM.defaultUnit = this.cellWidth;
         this.instantScrollRender(2);
+        // this.cnvInst = new CircularBuffer( this.cnvRowUprBnd - this.cnvRowLwrBnd + 1 );
+        // // this.cnvRowLabelInst = new CircularBuffer( this.cnvRowUprBnd - this.cnvRowLwrBnd + 1 );
+        // // this.cnvColInst = new CircularBuffer( this.cnvColUprBnd - this.cnvColLwrBnd + 1 );
+        // this.cnvLabelInst = new CircularBuffer( this.cnvColUprBnd - this.cnvColLwrBnd + 1 );
     }
 }
 
@@ -822,23 +520,6 @@ function DataStorage() {
     return this;
 }
 
-function adjustCanvasDPI(canvaElm, ctx) {
-    const dpr = window.devicePixelRatio || 1;
-    const cssWidth = canvaElm.clientWidth;
-    const cssHeight = canvaElm.clientHeight;
-
-    // Set the internal pixel size of the canvas
-
-    canvaElm.width = cssWidth * dpr;
-    canvaElm.height = cssHeight * dpr;
-
-    // Set the CSS size so it stays visually the same size on screen
-    canvaElm.style.width = `${cssWidth}px`;
-    canvaElm.style.height = `${cssHeight}px`;
-
-    // this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-}
 
 function getNextColumnLabel(colLabel) {
     let carry = 1;
@@ -881,27 +562,4 @@ canvaM.initialize();
 // canva.render();
 
 // canva.render();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
