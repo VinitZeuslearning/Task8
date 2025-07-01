@@ -1,19 +1,9 @@
-
 class CnvRcManager {
     constructor(size, defaultValue, offSet) {
         this.size = size;
         this.defaultValue = defaultValue;
-        this.values = new Map();           // Sparse storage
-
-        this.prefixSum = new Array(size);
-        this.prefixSum[ 0 ] = offSet;
-        this.rebuildPrefixSum();
-    }
-
-    rebuildPrefixSum() {
-        for (let i = 1; i < this.size; i++) {
-            this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i);
-        }
+        this.offSet = offSet;
+        this.values = new Map();  // Sparse: index → newValue
     }
 
     update(index, newValue) {
@@ -22,28 +12,121 @@ class CnvRcManager {
         } else {
             this.values.set(index, newValue);
         }
-
-        for (let i = Math.max( index + 1, 1 ) ; i < this.size; i++) {
-            this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i - 1);
-        }
     }
 
     getValue(index) {
         return this.values.has(index) ? this.values.get(index) : this.defaultValue;
     }
 
-    getPrefixSum() {
-        return this.prefixSum;
-    }
-
     getPrefVal(index) {
-        return this.prefixSum[index];
+        let sum = this.offSet + this.defaultValue * index;
+        for (let [idx, val] of this.values.entries()) {
+            if (idx < index) {
+                sum += (val - this.defaultValue);
+            }
+        }
+        return sum;
     }
 
-    getSumUpto(index) {
-        return this.prefixSum[index];
+    // ✅ New method: finds the smallest index such that prefix sum >= targetSum
+    findLowerBoundIndex(targetSum) {
+        let left = 0;
+        let right = this.size;
+        let result = this.size;  // default to size if no such index exists
+
+        while (left < right) {
+            const mid = Math.floor((left + right) / 2);
+            const pref = this.getPrefVal(mid);
+
+            if (pref >= targetSum) {
+                result = mid;
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        return result;
+    }
+
+    // (Optional: keep this if still needed)
+    findClosestIndexToSum(targetSum) {
+        let left = 0;
+        let right = this.size - 1;
+        let closestIndex = -1;
+        let closestDiff = Infinity;
+
+        while (left <= right) {
+            const mid = Math.floor((left + right) / 2);
+            const pref = this.getPrefVal(mid);
+            const diff = Math.abs(pref - targetSum);
+
+            if (diff < closestDiff) {
+                closestDiff = diff;
+                closestIndex = mid;
+            }
+
+            if (pref < targetSum) {
+                left = mid + 1;
+            } else if (pref > targetSum) {
+                right = mid - 1;
+            } else {
+                // Exact match
+                return mid;
+            }
+        }
+
+        return closestIndex;
     }
 }
+
+
+
+// class CnvRcManager {
+//     constructor(size, defaultValue, offSet) {
+//         this.size = size;
+//         this.defaultValue = defaultValue;
+//         this.values = new Map();           // Sparse storage
+
+//         this.prefixSum = new Array(size);
+//         this.prefixSum[ 0 ] = offSet;
+//         this.rebuildPrefixSum();
+//     }
+
+//     rebuildPrefixSum() {
+//         for (let i = 1; i < this.size; i++) {
+//             this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i);
+//         }
+//     }
+
+//     update(index, newValue) {
+//         if (newValue === this.defaultValue) {
+//             this.values.delete(index);
+//         } else {
+//             this.values.set(index, newValue);
+//         }
+
+//         for (let i = Math.max( index + 1, 1 ) ; i < this.size; i++) {
+//             this.prefixSum[i] = this.prefixSum[i - 1] + this.getValue(i - 1);
+//         }
+//     }
+
+//     getValue(index) {
+//         return this.values.has(index) ? this.values.get(index) : this.defaultValue;
+//     }
+
+//     getPrefixSum() {
+//         return this.prefixSum;
+//     }
+
+//     getPrefVal(index) {
+//         return this.prefixSum[index];
+//     }
+
+//     getSumUpto(index) {
+//         return this.prefixSum[index];
+//     }
+// }
 
 
 
@@ -63,20 +146,20 @@ export default class RCManager {
             this.values.delete(index);
         } else {
             this.values.set(index, newValue);
-            let ind = Math.floor( index / this.numberPerCanva );
-            let tmp = this.cnvdM.getValue( ind )
-            this.cnvdM.update( ind, tmp + newValue )
+            let ind = Math.floor(index / this.numberPerCanva);
+            let tmp = this.cnvdM.getValue(ind)
+            this.cnvdM.update(ind, tmp + newValue)
         }
     }
     incre(index, extraValue) {
-        let newValue = this.getValue( index ) + extraValue;
+        let newValue = this.getValue(index) + extraValue;
         if (newValue === this.defaultUnit) {
             this.values.delete(index);
         } else {
             this.values.set(index, newValue);
-            let ind = Math.floor( index / this.numberPerCanva );
-            let tmp = this.cnvdM.getValue( ind )
-            this.cnvdM.update( ind, tmp + extraValue )
+            let ind = Math.floor(index / this.numberPerCanva);
+            let tmp = this.cnvdM.getValue(ind)
+            this.cnvdM.update(ind, tmp + extraValue)
         }
     }
 

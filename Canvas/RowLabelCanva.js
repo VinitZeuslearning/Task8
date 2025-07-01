@@ -15,88 +15,134 @@ export default class RowLabelCanva {
         this.ctx = this._canva.getContext('2d');
         this._canva.style.zIndex = 2;
         this.rowMobj = null;
-        this.mpRowPos = new Map();
+        this.colMObj = null;
         this.moseOnIndx = -1;
-        this.resizingHandler = null;
         this.state = {
             resizing: false,
             resizePointer: false
         }
         this.rect = this._canva.getBoundingClientRect();
+        this.rowStartFrm = this.rowNumber * this.canvaRowNumber;
         // have to set the rowIndex, androwMobj 
     }
 
     render() {
-        this.height = this.rowMobj.cnvdM.getValue( this.canvaRowNumber );
+        // Get current canvas height from row manager
+        this.height = this.rowMobj.cnvdM.getValue(this.canvaRowNumber);
+
+        // Update canvas DOM size
         this._canva.style.height = this.height + "px";
         this._canva.style.width = this.width + "px";
+        this._canva.classList.add("labels")
+
         adjustCanvasDPI(this._canva, this.ctx);
 
+        // Clear and fill background
         this.ctx.clearRect(0, 0, this._canva.width, this._canva.height);
-        
         this.ctx.fillStyle = '#f0f0f0';
         this.ctx.fillRect(0, 0, this._canva.width, this._canva.height);
+
+        // Setup text and stroke styles
         this.ctx.strokeStyle = '#ccc';
         this.ctx.font = '12px sans-serif';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillStyle = '#000';
+        // this.ctx.lineWidth = 1;
 
-        // let rowHeight = this.height / this.rowNumber;
-        let rowStartFrm =  this.rowNumber * this.canvaRowNumber ;
+        // Pixel-perfect line alignment
+        // this.ctx.save();
+        // this.ctx.translate(0.5, 0.5);
 
-        let rowPos = 0 ;
+        let rowPos = 0;
+
         for (let r = 0; r < this.rowNumber; r++) {
             const y = rowPos;
-            let rowHeight =  this.rowMobj.getValue( rowStartFrm + r );
-            this.ctx.strokeRect(0, y, this.ctx.canvas.width, rowHeight);
-            this.ctx.fillText((this.rowCountStart + r).toString(), this.ctx.canvas.width / 2, y + rowHeight / 2);
+            const rowHeight = this.rowMobj.getValue(this.rowStartFrm + r);
+
+            // Draw horizontal line at top of this row
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y + 0.5 );
+            this.ctx.lineTo(this.ctx.canvas.width, y + 0.5 );
+            this.ctx.stroke();
+
+            // Draw row number text centered vertically in row
+            this.ctx.fillText(
+                (this.rowCountStart + r).toString(),
+                this.ctx.canvas.width / 2,
+                y + rowHeight / 2
+            );
+
             rowPos += rowHeight;
         }
+
+        // ❌ No final bottom line — intentionally left open
+
+        // this.ctx.restore();
+
+        // Position this canvas in the scrollable grid space
+        this._canva.style.left = this.parentRef.scrollLeft + "px";
+        this._canva.style.top = this.rowMobj.cnvdM.getPrefVal(this.canvaRowNumber) + "px";
     }
+
+
     mouseDownDistanceHandler(e) {
         this.state.resizing = true;
+
         const canvas = e.target;
         const rect = canvas.getBoundingClientRect();
 
-        const startX = e.clientX - rect.left;
-        const startY = e.clientY - rect.top;
+        let startX = e.clientX - rect.left;
+        let startY = e.clientY - rect.top;
 
         // Set resize cursor on mousedown
-        canvas.style.cursor = 'ns-resize';
+        canvas.style.cursor = 'row-resize';
 
-        const onMouseUp = (ev) => {
+        const onMouseMove = (ev) => {
             const endX = ev.clientX - rect.left;
             const endY = ev.clientY - rect.top;
 
             const dx = endX - startX;
             const dy = endY - startY;
 
+            if (dy > 10) {
+                console.log()
+            }
+
+
             const distance = Math.sqrt(dx * dx + dy * dy);
             console.log(`Mouse moved: ${distance}px`);
 
             // Revert cursor to default on mouseup
-            canvas.style.cursor = 'default';
 
-            window.removeEventListener( 'mouseup', onMouseUp );
-            this.parentRef.resizingHandler({ canvaRow: this.canvaRowNumber, extra: dy, rowNumber: this.moseOnIndx - 1  });
-            this.state.resizing = false;
+            this.parentRef.resizingHandler({ canvaRow: this.canvaRowNumber, extra: Math.floor(dy), rowNumber: this.moseOnIndx - 1 });
+            startX += dx;
+            startY += dy;
         };
 
-        onMouseUp.bind(this);
+        onMouseMove.bind(this);
 
+        window.addEventListener('mousemove', onMouseMove);
+        const onMouseUp = (e) => {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            canvas.style.cursor = 'default';
+            this.state.resizing = false;
+        }
         window.addEventListener('mouseup', onMouseUp);
     }
 
     isOnLine(x, y) {
         let threshold = 2;
         if (x >= 0 && x < this.width) {
-            let tmp = 0;
-            for (let i = this.rowIndex; i < this.rowIndex + this.rowNumber; i++) {
+            let tmp = this.rowMobj.getValue(this.rowStartFrm);
+            let row = this.rowStartFrm + 1;
+            for (let i = this.rowIndex + 1; i <= this.rowIndex + this.rowNumber; i++) {
                 if (Math.abs(y - tmp) <= threshold) {
-                    return i;
+                    return row;
                 }
-                tmp += this.rowMobj.getValue(i);
+                tmp += this.rowMobj.getValue(row);
+                row++;
             }
         }
         return -1;
@@ -111,10 +157,11 @@ export default class RowLabelCanva {
         this.height = height;
         this.width = width;
         this.rowCountStart = rowCountStart;
+        this.rowStartFrm = this.rowNumber * this.canvaRowNumber;
         this.render();
         this.rect = this._canva.getBoundingClientRect();
         this._canva.addEventListener('mousedown', (e) => {
-            if ( ( this.moseOnIndx != -1 && this.moseOnIndx != 0 ) && this.state.resizePointer) {
+            if ((this.moseOnIndx != -1) && this.state.resizePointer) {
                 this.mouseDownDistanceHandler(e);
             }
         });
@@ -123,6 +170,7 @@ export default class RowLabelCanva {
             if (this.state.resizing) {
                 return;
             }
+            this.rect = this._canva.getBoundingClientRect();
             let x = e.clientX - this.rect.left;
             let y = e.clientY - this.rect.top;
             // console.log(this.rect.top)
@@ -130,7 +178,7 @@ export default class RowLabelCanva {
             console.log(y);
             if (tmp != -1) {
                 this.state.resizePointer = true;
-                this._canva.style.cursor = 'ns-resize';
+                this._canva.style.cursor = 'row-resize';
                 this.moseOnIndx = tmp;
                 console.log("on row line " + this.moseOnIndx)
             } else {
@@ -138,7 +186,7 @@ export default class RowLabelCanva {
                 this.moseOnIndx = -1;
             }
         })
-        
+
 
     }
 }

@@ -8,7 +8,7 @@ export default class Canva {
         this.ctx = this._canva.getContext('2d');
         this.currRow = -1;
         this.currCol = -1;
-        this.fontSize = 10;
+        this.fontSize = 12;
         this.rowsHeight;
         this.colswidth;
         this.canvaHeight = 0;
@@ -21,16 +21,33 @@ export default class Canva {
         this.masterWobj = null;
         this.canvaRowIndex = null;
         this.canvaColIndex = null;
+        this.inputElmObj = null;
+
+        this.rowIndexStartFrm = this.canvaRowIndex * this.rowNumber;
+        this.colIndexStartFrm = this.canvaColIndex * this.colNumber;
+
+        this.cellDataObj = null;
+
+        this.selectionObj = {
+            Draw: true,
+            startRow: 1,
+            startCol: 2,
+            endRow: 40,
+            endCol: 4,
+        };
+
+
+
     }
 
     adjustCanvasDPI() {
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = window.devicePixelRatio;
         const cssWidth = this._canva.clientWidth;
         const cssHeight = this._canva.clientHeight;
 
         // Set the internal pixel size of the canvas
-        this._canva.width = cssWidth * dpr;
-        this._canva.height = cssHeight * dpr;
+        this._canva.width = Math.floor(cssWidth * dpr);
+        this._canva.height = Math.floor(cssHeight * dpr);
 
         // Set the CSS size so it stays visually the same size on screen
         this._canva.style.width = `${cssWidth}px`;
@@ -61,79 +78,248 @@ export default class Canva {
         }
         return i;
     }
-
     render() {
-        // this._parent.appendChild(this._canva);s
-
+        // Reset transform
+        // this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        console.log(`render is happen for x: ${this.canvaRowIndex} y : ${this.canvaColIndex}`)
+        // Clear canvas
         this.ctx.clearRect(0, 0, this._canva.width, this._canva.height);
 
-        this.canvaHeight = this.masterHobj.cnvdM.getValue( this.canvaRowIndex );
-        this.canvaWidth =  this.masterWobj.cnvdM.getValue( this.canvaColIndex );
+        // Update canvas size
+        this.canvaHeight = this.masterHobj.cnvdM.getValue(this.canvaRowIndex);
+        this.canvaWidth = this.masterWobj.cnvdM.getValue(this.canvaColIndex);
         this._canva.style.height = this.canvaHeight + "px";
         this._canva.style.width = this.canvaWidth + "px";
-        
 
+        // Adjust for device pixel ratio
         this.adjustCanvasDPI();
+
         let height = this.canvaHeight;
         let width = this.canvaWidth;
 
-        this.ctx.lineWidth = 0.5;
-        this.ctx.save();
-        this.ctx.translate(0.5, 0.5);
+        this.ctx.lineWidth = 1;
 
-        // Draw horizontal grid lines (rows)
+        // Pixel-perfect align strokes
+        // this.ctx.translate(0.5, 0.5);
+
+        // Draw horizontal grid lines
         let y = 0;
         let ind;
-        this.ctx.font = `${this.fontSize}px  'Courier New', monospace`;
-
+        this.ctx.font = `${this.fontSize}px Arial, sans-serif`;
         let Pos = this.rowNumber * this.canvaRowIndex;
-        for (ind = 0; ind <= this.rowNumber; ind++) {
-            Pos += ind;
+        this.ctx.strokeStyle = "#ccc";
+        for (ind = 0; ind < this.rowNumber; ind++) {
+            y = Math.round(y);  // Snap to integer
+
             this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(width, y);
+            this.ctx.moveTo(0, y + 0.5);
+            this.ctx.lineTo(width, y + 0.5);
             this.ctx.stroke();
-            // y += this.cellHeight;
+
             y += this.masterHobj.getValue(Pos);
+            Pos++;
         }
 
-        // Draw vertical grid lines (columns)
+        // Draw vertical grid lines
         let x = 0;
-        
-        Pos = this.colNumber * this.canvaRowIndex;
+        Pos = this.colNumber * this.canvaColIndex;
 
-        for (ind = 0; ind <= this.colNumber; ind++) {
-            Pos += ind;
+        for (ind = 0; ind < this.colNumber; ind++) {
+            x = Math.round(x);  // Snap to integer
+
             this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, height);
+            this.ctx.moveTo(x + 0.5, 0);
+            this.ctx.lineTo(x + 0.5, height);
             this.ctx.stroke();
-            // x += this.cellWidth;
+
             x += this.masterWobj.getValue(Pos);
+            Pos++;
         }
 
-        // to jump from the border;
-        this.ctx.translate(0.5, 0.5);
+        // Draw text cells
 
-        // filling text
-        x = this.cellWidth / 2;
-        y = this.cellHeight / 2 + 1;
+        // Draw text cells
+
+        this.ctx.textBaseline = "middle";
         this.ctx.textAlign = "center";
         let charWidth = this.ctx.measureText("W").width;
+
+        // Precompute cell top positions inside the canvas (starting from 0)
+        let rowYs = [];
+        let yPos = 0;
         for (let r = 0; r < this.rowNumber; r++) {
-            x = this.cellWidth / 2;
-            for (let c = 0; c < this.colNumber; c++) {
-                let tmp = " ";
-                tmp = tmp.slice(0, (this.cellWidth / charWidth) - 2);
-                this.ctx.fillText(tmp, x, y);
-                x += this.cellWidth;
-            }
-            y += this.cellHeight;
+            rowYs.push(yPos);
+            yPos += this.masterHobj.getValue(this.rowIndexStartFrm + r);
         }
 
-        this.ctx.restore()
+        // Draw text
+        for (let r = 0; r < this.rowNumber; r++) {
+            let cellTopY = rowYs[r];
+            let cellH = this.masterHobj.getValue(this.rowIndexStartFrm + r);
+
+            let cellX = 0; // Start X at 0 within canvas
+            for (let c = 0; c < this.colNumber; c++) {
+                let cellW = this.masterWobj.getValue(this.colIndexStartFrm + c);
+
+                let tmp = this.cellDataObj.get(this.rowIndexStartFrm + r, this.colIndexStartFrm + c);
+                let maxChars = Math.floor(cellW / charWidth) - 2;
+                tmp = tmp.slice(0, Math.max(0, maxChars));
+
+                let textX = cellX + cellW / 2;
+                let textY = cellTopY + cellH / 2;
+
+                this.ctx.fillText(tmp, textX, textY);
+
+                cellX += cellW;
+            }
+        }
+
+
+
+        // Selection Code 
+
+
+
+        // Draw selection rectangle if active
+        if (this.selectionObj.Draw) {
+            const { startRow, startCol, endRow, endCol } = this.selectionObj;
+
+            const visStartRow = this.rowIndexStartFrm;
+            const visEndRow = visStartRow + this.rowNumber - 1;
+            const visStartCol = this.colIndexStartFrm;
+            const visEndCol = visStartCol + this.colNumber - 1;
+
+            if (
+                endRow >= visStartRow && startRow <= visEndRow &&
+                endCol >= visStartCol && startCol <= visEndCol
+            ) {
+                let selectionLeft = 0, selectionTop = 0, selectionRight = 0, selectionBottom = 0;
+
+                for (let r = visStartRow; r < Math.min(startRow, visEndRow + 1); r++) {
+                    selectionTop += this.masterHobj.getValue(r);
+                }
+                selectionBottom = selectionTop;
+                for (let r = Math.max(startRow, visStartRow); r <= Math.min(endRow, visEndRow); r++) {
+                    selectionBottom += this.masterHobj.getValue(r);
+                }
+
+                for (let c = visStartCol; c < Math.min(startCol, visEndCol + 1); c++) {
+                    selectionLeft += this.masterWobj.getValue(c);
+                }
+                selectionRight = selectionLeft;
+                for (let c = Math.max(startCol, visStartCol); c <= Math.min(endCol, visEndCol); c++) {
+                    selectionRight += this.masterWobj.getValue(c);
+                }
+
+                const width = selectionRight - selectionLeft;
+                const height = selectionBottom - selectionTop;
+
+                // Fill selection background
+                this.ctx.fillStyle = "rgba(0, 120, 215, 0.2)";
+                this.ctx.fillRect(selectionLeft, selectionTop, width, height);
+
+                // Set border styles
+                this.ctx.strokeStyle = "rgba(0, 120, 215, 0.8)";
+                this.ctx.lineWidth = 2;
+
+                // Draw borders conditionally based on selection's position relative to this canvas's bounds
+                this.ctx.beginPath();
+
+                if (startRow <= visEndRow && startRow >= visStartRow) {
+                    // top border
+                    this.ctx.moveTo(selectionLeft, selectionTop);
+                    this.ctx.lineTo(selectionRight, selectionTop);
+                }
+                if (endCol <= visEndCol && endCol >= visStartCol) {
+                    // right border
+                    this.ctx.moveTo(selectionRight, selectionTop);
+                    this.ctx.lineTo(selectionRight, selectionBottom);
+                }
+                if (endRow <= visEndRow && endRow >= visStartRow) {
+                    // bottom border
+                    this.ctx.moveTo(selectionRight, selectionBottom);
+                    this.ctx.lineTo(selectionLeft, selectionBottom);
+                }
+                if (startCol <= visEndCol && startCol >= visStartCol) {
+                    // left border
+                    this.ctx.moveTo(selectionLeft, selectionBottom);
+                    this.ctx.lineTo(selectionLeft, selectionTop);
+                }
+
+                this.ctx.stroke();
+            }
+        }
+
+
 
     }
+
+    findCell(x, y) {
+        let tmpY = this.rowIndexStartFrm;
+        let tmpX = this.colIndexStartFrm;
+
+        // Starting position of this canvas
+        let posY = this.masterHobj.cnvdM.getPrefVal(this.canvaRowIndex);
+        let posX = this.masterWobj.cnvdM.getPrefVal(this.canvaColIndex);
+
+        let currentY = posY;
+        let currentX = posX;
+
+        let cellTop = -1;
+        let cellLeft = -1;
+
+        // Find row index and top position
+        for (; tmpY < this.rowNumber + this.rowIndexStartFrm; tmpY++) {
+            let cellHeight = this.masterHobj.getValue(tmpY);
+            if (y >= currentY && y < currentY + cellHeight) {
+                cellTop = currentY;
+                break;
+            }
+            currentY += cellHeight;
+        }
+
+        // If not found — exit early
+        if (tmpY >= this.rowNumber + this.rowIndexStartFrm) return null;
+
+        // Find col index and left position
+        for (; tmpX < this.colNumber + this.colIndexStartFrm; tmpX++) {
+            let cellWidth = this.masterWobj.getValue(tmpX);
+            if (x >= currentX && x < currentX + cellWidth) {
+                cellLeft = currentX;
+                break;
+            }
+            currentX += cellWidth;
+        }
+
+        // If not found — exit early
+        if (tmpX >= this.colNumber + this.colIndexStartFrm) return null;
+
+        // Now both row & col are valid — set into inputElmObj
+        // if ( this.inputElmObj.canvaRowInd == this.canvaRowIndex && this.inputElmObj.canvaColInd == this.canvaColIndex && this.inputElmObj.isCellValueChanged ) {
+        //     this.cellDataObj.set( this.inputElmObj.cellRow, this.inputElmObj.cellCol, this.inputElmObj._inpElm.value );
+        //     this.render();
+        // }
+        this.inputElmObj.beforeRenderHandler();
+        this.inputElmObj
+        this.inputElmObj.posX = cellLeft;
+        this.inputElmObj.posY = cellTop;
+        this.inputElmObj.canvaColInd = this.canvaColIndex;
+        this.inputElmObj.canvaRowInd = this.canvaRowIndex;
+        this.inputElmObj.cellRow = tmpY;
+        this.inputElmObj.cellCol = tmpX;
+        this.inputElmObj.render({ posX: cellLeft, posY: cellTop });
+    }
+
+
+
+    setInputPos(obj) {
+        if (!obj) return; // defensive check if click outside grid region
+        this.inpElm.style.top = obj.top + "px";
+        this.inpElm.style.left = obj.left - 2 + "px";
+        this.inpElm.style.height = this.masterHobj.getValue(obj.row) + "px";
+        this.inpElm.style.width = this.masterWobj.getValue(obj.col) + "px";
+    }
+
 
     changeVal(r, c, val) {
         // Value-changing logic here
@@ -141,21 +327,24 @@ export default class Canva {
 
     _initialize(cellHeight = 20, cellWidth = 100, rowNumber = 0, colNumber = 0) {
 
-        // this._canva.addEventListener('click', (e) => {
-        //     this.rowColHandler(e.clientX, e.clientY);
-        // });
+        this._canva.addEventListener('click', (e) => {
+            const container = document.getElementById("canvaManager");
+            const rect = container.getBoundingClientRect();
+
+            const relativeX = e.clientX + container.scrollLeft - rect.left;
+            const relativeY = e.clientY + container.scrollTop - rect.top;
+
+            this.findCell(relativeX, relativeY);
+        });
+
 
         this.cellHeight = cellHeight;
         this.cellWidth = cellWidth;
         this.rowNumber = rowNumber;
         this.colNumber = colNumber;
-   
 
-        let rect = this._canva.getBoundingClientRect();
-        this.canvaLeft = rect.left;
-        this.canvaRight = rect.right;
-        this.canvaTop = rect.top;
-        this.canvaBottom = rect.bottom;
+        this.rowIndexStartFrm = this.canvaRowIndex * this.rowNumber;
+        this.colIndexStartFrm = this.canvaColIndex * this.colNumber;
 
         this.render();
     }

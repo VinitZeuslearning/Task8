@@ -3,8 +3,9 @@ import TwoLevelMap from "./twolevelmap.js";
 import RCManager from "./DataStructure/RmCnvManager.js";
 import RowLabelCanva from "./Canvas/RowLabelCanva.js";
 import ColLabelCanva from "./Canvas/ColLabelCanva.js";
-
+import CellData from "./DataStructure/CellData.js";
 import Canva from "./Canvas/DataCanvas.js";
+import InputTxt from "./Canvas/inputElm.js";
 /*
 what to do next 
 
@@ -30,8 +31,8 @@ class CanvasManager {
         this.rowLabelCanvaW = 50;
 
         // col label height
-        this.colLabelCanvaH = 50;
-
+        this.colLabelCanvaH = 20;
+        this.containerRct = document.getElementById("Container").getBoundingClientRect();
         this.rows = 100000;
         this.cols = 500;
         this.cellWidth = 100;
@@ -81,10 +82,18 @@ class CanvasManager {
 
         this._render = true;
 
-        this.rowM = new RCManager(this.rows, this.cellHeight, this.rowsPerCanva, this.rowLabelCanvaW);
-        this.colM = new RCManager(this.cols, this.cellWidth, this.colsPerCanva, this.colLabelCanvaH);
+        this.rowM = new RCManager(this.rows, this.cellHeight, this.rowsPerCanva, this.colLabelCanvaH);
+        this.colM = new RCManager(this.cols, this.cellWidth, this.colsPerCanva, this.rowLabelCanvaW);
 
         this._isInstantRenderRequire = true;
+
+        this.inputStateM = new InputTxt( );
+        this.inputStateM.masterHobj = this.rowM;
+        this.inputStateM.masterWobj = this.colM;
+        this.inputStateM.colsPerCanva = this.colsPerCanva
+        this.inputStateM.rowsPerCanva = this.rowsPerCanva;
+        this.cellDataObj = new CellData()
+        this.inputStateM.cellDataObj = this.cellDataObj;
     }
 
     resizingHandler(obj) {
@@ -98,55 +107,79 @@ class CanvasManager {
 
 
             // this will auto update the canva prefix and size
-            let row = ( obj.canvaRow * this.rowsPerCanva ) + obj.rowNumber 
-            tmp = this.rowM.getValue( row );
-            this.rowM.incre( row, obj.extra );
+            let row = obj.rowNumber;
+            tmp = this.rowM.getValue(row);
+            if (this.rowM.getValue(row) + obj.extra < this.cellHeight) {
+                return;
+            }
+            this.rowM.incre(row, obj.extra);
 
             // changing top of every element 
 
+
+
             for (let i = obj.canvaRow + 1; i <= this.cnvRowUprBnd; i++) {
-                for (let j = Math.max( this.cnvColLwrBnd, 0 ); j <= this.cnvColUprBnd; j++) {
+                for (let j = Math.max(this.cnvColLwrBnd, 0); j <= this.cnvColUprBnd; j++) {
                     tmp = this.cnvInst.get(i, j);
                     tmp._canva.style.top = this.rowM.cnvdM.getPrefVal(i) + "px";
                 }
             }
-            
 
-            for (let i = Math.max( this.cnvColLwrBnd, 0 ); i <= this.cnvColUprBnd; i++) {
-                tmp = this.cnvInst.get( obj.canvaRow , i);
+            // canvaLabel 
+            // rendering label 
+            tmp = this.rowCnvLabelInst.get(obj.canvaRow);
+            tmp.render();
+            for (let i = obj.canvaRow + 1; i <= this.cnvRowUprBnd; i++) {
+                tmp = this.rowCnvLabelInst.get(i);
+                tmp._canva.style.top = this.rowM.cnvdM.getPrefVal(i) + "px";
+            }
+
+
+            for (let i = Math.max(this.cnvColLwrBnd, 0); i <= this.cnvColUprBnd; i++) {
+                tmp = this.cnvInst.get(obj.canvaRow, i);
                 // rendering the canva
                 tmp.render();
-
-                tmp = this.rowCnvLabelInst.get( i );
-                if ( !tmp ) {
-                    continue;
-                }
-                tmp.render()
             }
 
         }
         else {
-            let col = ( obj.canvaCol * this.colsPerCanva ) + obj.colNumber 
-            tmp = this.colM.getValue( col );
-            this.colM.update( col, tmp + obj.extra );
+            let col = obj.colNumber;
+            tmp = this.colM.getValue(col);
+            if (this.colM.getValue(col) + obj.extra < this.cellWidth) {
+                return;
+            }
+            if (this.colM.getValue(col) + obj.extra > 55) {
+                console.log()
+            }
+            if (obj.extra >= 2) {
+                console.log()
+            }
+            this.colM.incre(col, obj.extra);
 
-            for ( let j = obj.col + 1; j <= this.cnvColUprBnd; j++ ) {
-                for ( let i = Math.max( this.cnvRowLwrBnd, 0 ); i <= this.cnvRowUprBnd; i++ ) {
-                    tmp = this.cnvInst.get( i, j );
-                    tmp._canva.style.left = this.colM.cnvdM.getPrefVal( j ) + "px";
+
+            for (let j = obj.canvaCol + 1; j <= this.cnvColUprBnd; j++) {
+                for (let i = Math.max(this.cnvRowLwrBnd, 0); i <= this.cnvRowUprBnd; i++) {
+                    tmp = this.cnvInst.get(i, j);
+                    tmp._canva.style.left = this.colM.cnvdM.getPrefVal(j) + "px";
                 }
             }
 
-            for ( let i = Math.max( this.cnvRowLwrBnd, 0 ); i <= this.cnvRowLwrBnd; i++ ) {
-                tmp = this.cnvInst.get( i, obj.col );
+            // rendering label 
+
+            tmp = this.colCnvLabelInst.get(obj.canvaCol);
+            tmp.render();
+            for (let j = obj.canvaCol + 1; j <= this.cnvColUprBnd; j++) {
+                tmp = this.colCnvLabelInst.get(j);
+                tmp._canva.style.left = this.colM.cnvdM.getPrefVal(j) + "px";
+            }
+
+            for (let i = Math.max(this.cnvRowLwrBnd, 0); i <= this.cnvRowUprBnd; i++) {
+                tmp = this.cnvInst.get(i, obj.canvaCol);
                 tmp.render();
-                tmp = this.colCnvLabelInst.get( i );
-                 if ( !tmp ) {
-                    continue;
-                }
-                tmp.render()
             }
         }
+
+        this.inputStateM.render();
     }
 
     renderAll() {
@@ -253,7 +286,6 @@ class CanvasManager {
                 continue;
             }
             left = this.colM.cnvdM.getPrefVal(col);
-            let dt = new DataStorage();
 
             // creating canva instance and initilizing it
 
@@ -275,7 +307,7 @@ class CanvasManager {
         labelElm.resizingHandler = this.resizingHandler;
         this.rowCnvLabelInst.set(r, labelElm);
         labelElm._canva.style.left = this.scrollLeft + "px";
-        labelElm._canva.style.top = this.rowM.cnvdM.getPrefVal( r ) + "px";
+        labelElm._canva.style.top = this.rowM.cnvdM.getPrefVal(r) + "px";
         labelElm.rowMobj = this.rowM;
         labelElm.rowNumber = (r + 1) * this.rowsPerCanva;
         this.canvaMagnagerElm.append(labelElm._canva);
@@ -286,10 +318,14 @@ class CanvasManager {
     appendColLabel(c) {
         if (document.getElementById("C" + c)) { return }
         let labelElm = new ColLabelCanva();
+        labelElm.parentRef = this;
+        labelElm.canvaColNumber = c;
         this.colCnvLabelInst.set(c, labelElm);
         this.canvaMagnagerElm.append(labelElm._canva);
         labelElm._canva.id = "C" + c;
         labelElm._canva.style.top = this.scrollTop + "px";
+        labelElm.colMobj = this.colM;
+        labelElm.colNumber = (c + 1) * this.colsPerCanva;
         labelElm._canva.style.left = this.colM.cnvdM.getPrefVal(c) + "px";
         labelElm.initialize(this.colsPerCanva, this.colLabelCanvaH, this.canvaW, c * this.colsPerCanva)
     }
@@ -350,53 +386,54 @@ class CanvasManager {
         inst.masterHobj = this.rowM;
         inst.canvaHeight = this.rowM.cnvdM.getValue(row);
         inst.canvaWidth = this.colM.cnvdM.getValue(col);
-        inst._canva.style.top = this.rowM.cnvdM.getPrefVal(row)  + "px";
-        inst._canva.style.left = this.colM.cnvdM.getPrefVal(col)  + "px";
+        inst._canva.style.top = this.rowM.cnvdM.getPrefVal(row) + "px";
+        inst._canva.style.left = this.colM.cnvdM.getPrefVal(col) + "px";
         inst._canva.id = row + "_" + col;
-        inst._dataStg = new DataStorage();
-
+        inst.cellDataObj  = this.cellDataObj;
+        inst.inputElmObj = this.inputStateM;
+        inst.resizeHandler = this.instantScrollRender.bind( this );
         return inst;
     }
 
-    // flage 1 ---- > row render
-    // flage 0 ---- > col render
-    // flage 2 ---- > both need to be rerender
-
+    // flage 1 ----> row render
+    // flage 0 ----> col render
+    // flage 2 ----> both need to be rerender
     instantScrollRender(flage) {
-        if (!this._render || !this._isInstantRenderRequire) { return }
+        if (!this._render || !this._isInstantRenderRequire) return;
+
         const scrollLeft = Math.trunc(this.scrollLeft);
-        let j;
         const scrollTop = Math.trunc(this.scrollTop);
 
-        let horInd = Math.trunc(scrollLeft / this.canvaW);
-        let verInd = Math.trunc(scrollTop / this.canvaH);
+        // Find visible top-left cell indices based on cumulative prefix sum
+        const horInd = this.colM.cnvdM.findLowerBoundIndex(scrollLeft);
+        const verInd = this.rowM.cnvdM.findLowerBoundIndex(scrollTop);
 
+        // Calculate lower and upper bounds for both axes (with extraCanva buffer)
         this.cnvColLwrBnd = horInd - this.extraCanva;
-        this.cnvColUprBnd = horInd + this.canvasHorizontal - 1;
+        this.cnvColUprBnd = horInd + (this.canvasHorizontal - 1) + this.extraCanva;
         this.cnvRowLwrBnd = verInd - this.extraCanva;
-        this.cnvRowUprBnd = verInd + this.canvasVertical - 1;
+        this.cnvRowUprBnd = verInd + (this.canvasVertical - 1) + this.extraCanva;
 
+        // Clear previous canvas children
         this.clearChilds();
-        if (flage == 1 || flage == 2) {
-            this.appendRow(verInd);
-        }
-        if (flage == 0 || flage == 2) {
-            this.appendCol(horInd);
-        }
 
-        for (j = this.cnvColLwrBnd; j <= this.cnvColUprBnd; j++) {
-            if (flage == 0 || flage == 2) {
+        // Append columns if required
+        if (flage === 0 || flage === 2) {
+            for (let j = this.cnvColLwrBnd; j <= this.cnvColUprBnd; j++) {
                 this.appendCol(j, true);
             }
         }
-        for (j = this.cnvRowLwrBnd; j <= this.cnvRowUprBnd; j++) {
-            if (flage == 1 || flage == 2) {
+
+        // Append rows if required
+        if (flage === 1 || flage === 2) {
+            for (let j = this.cnvRowLwrBnd; j <= this.cnvRowUprBnd; j++) {
                 this.appendRow(j, true);
             }
         }
-        this._isInstantRenderRequire = false;
 
+        this._isInstantRenderRequire = false;
     }
+
 
     smoothScrollRender(isVerticalMove) {
         if (!this._render) {
@@ -404,46 +441,125 @@ class CanvasManager {
             return;
         }
         if (!isVerticalMove) {
-            const scrollLeft = Math.trunc(this.scrollLeft);
-            let horInd = Math.trunc(scrollLeft / this.canvaW);
+            // const scrollLeft = Math.trunc(this.scrollLeft);
+            // // let horInd = Math.trunc(scrollLeft / this.canvaW);
+            // let horInd = Math.trunc(scrollLeft / this.canvaW);
 
-            // For Horizontal
-            if (horInd >= 1) {
-                console.log();
-            }
-            if ((horInd + this.canvasHorizontal) > this.cnvColUprBnd + 1) {
+
+            // Remove left-side columns
+            while (this.scrollLeft > this.colM.cnvdM.getPrefVal(this.cnvColLwrBnd + 1)) {
                 this.removeCol(this.cnvColLwrBnd, true);
-                this.cnvColUprBnd = horInd + this.canvasHorizontal - 1;
-                this.cnvColLwrBnd = horInd - this.extraCanva;
-                this.appendCol(this.cnvColUprBnd, true);
+                this.cnvColLwrBnd++;
             }
-            else if (horInd - this.extraCanva < this.cnvColLwrBnd) {
+
+            // Add left-side columns if necessary
+            while (this.scrollLeft < this.colM.cnvdM.getPrefVal(this.cnvColLwrBnd)) {
+                this.appendCol(this.cnvColLwrBnd - 1, true);
+                this.cnvColLwrBnd--;
+            }
+
+            // Add right-side columns if necessary
+            while (this.scrollLeft + this.containerRct.width > this.colM.cnvdM.getPrefVal(this.cnvColUprBnd + 1)) {
+                this.appendCol(this.cnvColUprBnd + 1);
+                this.cnvColUprBnd++;
+            }
+
+            // Remove right-side columns if necessary
+            while (this.scrollLeft + this.containerRct.width < this.colM.cnvdM.getPrefVal(this.cnvColUprBnd)) {
                 this.removeCol(this.cnvColUprBnd);
-                this.cnvColUprBnd = horInd + this.canvasHorizontal - 1;;
-                this.cnvColLwrBnd = horInd - this.extraCanva;
-                this.appendCol(this.cnvColLwrBnd);
+                this.cnvColUprBnd--;
             }
+
+
+            // if ( this.scrollLeft > this.colM.cnvdM.getPrefVal( this.cnvColLwrBnd + 1 ) ) {
+            //     this.removeCol( this.cnvColLwrBnd, true );
+            //     this.cnvColLwrBnd++;
+            // }
+
+            // if ( this.scrollLeft < this.colM.cnvdM.getPrefVal( this.cnvColLwrBnd  ) ) {
+            //     this.appendCol( this.cnvColLwrBnd - 1, true  );
+            //     this.cnvColLwrBnd--;
+            // }
+
+            // if ( this.scrollLeft + this.containerRct.width > this.colM.cnvdM.getPrefVal( this.cnvColUprBnd + 1 ) ) {
+            //     this.appendCol( this.cnvColUprBnd + 1 );
+            //     this.cnvColUprBnd++;
+            // }
+
+            // if ( this.scrollLeft + this.containerRct.width < this.colM.cnvdM.getPrefVal(  this.cnvColUprBnd ) ) {
+            //     this.removeCol( this.cnvColUprBnd );
+            //     this.cnvColUprBnd--;
+            // }
+
+
+            // // For Horizontal
+            // if (horInd >= 1) {
+            //     console.log();
+            // }
+            // if ((horInd + this.canvasHorizontal) > this.cnvColUprBnd + 1) {
+            //     this.removeCol(this.cnvColLwrBnd, true);
+            //     this.cnvColUprBnd = horInd + this.canvasHorizontal - 1;
+            //     this.cnvColLwrBnd = horInd - this.extraCanva;
+            //     this.appendCol(this.cnvColUprBnd, true);
+            // }
+            // else if (horInd - this.extraCanva < this.cnvColLwrBnd) {
+            //     this.removeCol(this.cnvColUprBnd);
+            //     this.cnvColUprBnd = horInd + this.canvasHorizontal - 1;;
+            //     this.cnvColLwrBnd = horInd - this.extraCanva;
+            //     this.appendCol(this.cnvColLwrBnd);
+            // }
         }
         else {
             // For vertical
-            const scrollTop = Math.trunc(this.scrollTop);
-            let verInd = Math.trunc(scrollTop / this.canvaH);
-            if ((verInd + this.canvasVertical + this.extraCanva) > this.cnvRowUprBnd + 1) {
-                this.removeRow(this.cnvRowLwrBnd);
-                this.cnvRowUprBnd = verInd + this.canvasVertical + this.extraCanva - 1;
-                this.cnvRowLwrBnd = verInd - this.extraCanva;
-                this.appendRow(this.cnvRowUprBnd);
+
+            // Remove top-side rows
+            while (this.scrollTop > this.rowM.cnvdM.getPrefVal(this.cnvRowLwrBnd + 1)) {
+                this.removeRow(this.cnvRowLwrBnd, true);
+                this.cnvRowLwrBnd++;
             }
-            else if (verInd - this.extraCanva < this.cnvRowLwrBnd) {
-                this.removeRow(this.cnvRowUprBnd);
-                this.cnvRowUprBnd = verInd + this.canvasVertical + this.extraCanva - 1;
-                this.cnvRowLwrBnd = verInd - this.extraCanva;
-                this.appendRow(this.cnvRowLwrBnd);
+
+            // Add top-side rows if necessary
+            while (this.scrollTop < this.rowM.cnvdM.getPrefVal(this.cnvRowLwrBnd)) {
+                this.appendRow(this.cnvRowLwrBnd - 1, true);
+                this.cnvRowLwrBnd--;
             }
+
+            // Remove bottom-side rows if necessary
+            while (this.scrollTop + this.containerRct.height < this.rowM.cnvdM.getPrefVal(this.cnvRowUprBnd)) {
+                this.removeRow(this.cnvRowUprBnd, true);
+                this.cnvRowUprBnd--;
+            }
+
+            // Add bottom-side rows if necessary
+            while (this.scrollTop + this.containerRct.height > this.rowM.cnvdM.getPrefVal(this.cnvRowUprBnd + 1)) {
+                this.appendRow(this.cnvRowUprBnd + 1, true);
+                this.cnvRowUprBnd++;
+            }
+
+            // const scrollTop = Math.trunc(this.scrollTop);
+            // let verInd = Math.trunc(scrollTop / this.canvaH);
+            // if ((verInd + this.canvasVertical + this.extraCanva) > this.cnvRowUprBnd + 1) {
+            //     this.removeRow(this.cnvRowLwrBnd);
+            //     this.cnvRowUprBnd = verInd + this.canvasVertical + this.extraCanva - 1;
+            //     this.cnvRowLwrBnd = verInd - this.extraCanva;
+            //     this.appendRow(this.cnvRowUprBnd);
+            // }
+            // else if (verInd - this.extraCanva < this.cnvRowLwrBnd) {
+            //     this.removeRow(this.cnvRowUprBnd);
+            //     this.cnvRowUprBnd = verInd + this.canvasVertical + this.extraCanva - 1;
+            //     this.cnvRowLwrBnd = verInd - this.extraCanva;
+            //     this.appendRow(this.cnvRowLwrBnd);
+            // }
         }
 
     }
 
+    handleInputChange( canvaRow, canvCol ) {
+        let obj = this.cnvInst.get( canvaRow, canvCol );
+        if ( obj ) {
+            obj.render();
+        }
+    }
     initialize() {
         this.viewPort.addEventListener('scroll', () => {
             let dx = Math.abs(this.scrollLeft - this.viewPort.scrollLeft);
@@ -502,6 +618,21 @@ class CanvasManager {
         this.rowM.defaultUnit = this.cellHeight;
         this.colM.defaultUnit = this.cellWidth;
         this.instantScrollRender(2);
+        this.inputStateM.posX =this.rowLabelCanvaW;
+        this.inputStateM.posY =  this.colLabelCanvaH;
+        this.inputStateM.canvaObj = this.cnvInst.get( 0, 0 );
+        this.inputStateM.setCanvaObj( this.cnvInst.get( 0, 0 ) );
+        this.inputStateM.renderHandler = this.handleInputChange.bind(this);
+        this.inputStateM.initialize()
+        this.inputStateM.render();
+
+
+        // setting input pos 
+
+        const hideElm = document.getElementById( "hideDiv" );
+        hideElm.style.height = this.colLabelCanvaH + "px";
+        hideElm.style.width = this.rowLabelCanvaW + "px";
+
         // this.cnvInst = new CircularBuffer( this.cnvRowUprBnd - this.cnvRowLwrBnd + 1 );
         // // this.cnvRowLabelInst = new CircularBuffer( this.cnvRowUprBnd - this.cnvRowLwrBnd + 1 );
         // // this.cnvColInst = new CircularBuffer( this.cnvColUprBnd - this.cnvColLwrBnd + 1 );
@@ -510,15 +641,15 @@ class CanvasManager {
 }
 
 
-function DataStorage() {
-    this.cellData = [
+// function DataStorage() {
+//     this.cellData = [
 
-    ];
-    this.rowNumber = 20;
-    this.colNumber = 8;
+//     ];
+//     this.rowNumber = 20;
+//     this.colNumber = 8;
 
-    return this;
-}
+//     return this;
+// }
 
 
 function getNextColumnLabel(colLabel) {
