@@ -23,34 +23,34 @@ export default class InputTxt {
         // if position provided, use it; else compute
 
 
-        this._inpElm.value = "";
-        if (position) {
-            this.posX = position.posX;
-            this.posY = position.posY;
-        } else {
-            let posY = this.masterHobj.cnvdM.getPrefVal(this.canvaRowInd);
-            let posX = this.masterWobj.cnvdM.getPrefVal(this.canvaColInd);
+        // this._inpElm.value = "";
+        // if (position) {
+        //     this.posX = position.posX;
+        //     this.posY = position.posY;
+        // } else {
+        //     let posY = this.masterHobj.cnvdM.getPrefVal(this.canvaRowInd);
+        //     let posX = this.masterWobj.cnvdM.getPrefVal(this.canvaColInd);
 
-            for (let i = this.canvaRowInd * this.rowsPerCanva; i < this.cellRow; i++) {
-                posY += this.masterHobj.getValue(i);
-            }
+        //     for (let i = this.canvaRowInd * this.rowsPerCanva; i < this.cellRow; i++) {
+        //         posY += this.masterHobj.getValue(i);
+        //     }
 
-            for (let j = this.canvaColInd * this.colsPerCanva; j < this.cellCol; j++) {
-                posX += this.masterWobj.getValue(j);
-            }
+        //     for (let j = this.canvaColInd * this.colsPerCanva; j < this.cellCol; j++) {
+        //         posX += this.masterWobj.getValue(j);
+        //     }
 
-            this.posX = posX;
-            this.posY = posY;
-        }
+        //     this.posX = posX;
+        //     this.posY = posY;
+        // }
 
-        // position and size the input element
-        this._inpElm.style.top = this.posY + "px";
-        this._inpElm.style.left = this.posX + "px";
-        this._inpElm.style.height = (this.masterHobj.getValue(this.cellRow) - 2) + "px";
-        this._inpElm.style.width = (this.masterWobj.getValue(this.cellCol) - 2) + "px";
+        // // position and size the input element
+        // this._inpElm.style.top = this.posY + "px";
+        // this._inpElm.style.left = this.posX + "px";
+        // this._inpElm.style.height = (this.masterHobj.getValue(this.cellRow) - 2) + "px";
+        // this._inpElm.style.width = (this.masterWobj.getValue(this.cellCol) - 2) + "px";
 
-        // update input value from cellDataObj
-        this._inpElm.value = this.cellDataObj.get(this.cellRow, this.cellCol);
+        // // update input value from cellDataObj
+        // this._inpElm.value = this.cellDataObj.get(this.cellRow, this.cellCol);
     }
 
     beforeRenderHandler() {

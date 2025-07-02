@@ -28,7 +28,7 @@ export default class TwoLevelMap {
     }
 
     get(id1, id2) {
-        if (!this.outerMap.has(id1)) return undefined;
+        if (! this.outerMap.has(id1)) return undefined;
         if (id2 === undefined) return this.outerMap.get(id1);
         return this.outerMap.get(id1).get(id2);
     }

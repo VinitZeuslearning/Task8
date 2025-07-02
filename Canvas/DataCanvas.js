@@ -21,24 +21,19 @@ export default class Canva {
         this.masterWobj = null;
         this.canvaRowIndex = null;
         this.canvaColIndex = null;
-        this.inputElmObj = null;
 
         this.rowIndexStartFrm = this.canvaRowIndex * this.rowNumber;
         this.colIndexStartFrm = this.canvaColIndex * this.colNumber;
 
         this.cellDataObj = null;
 
-        this.selectionObj = {
-            Draw: true,
-            startRow: 1,
-            startCol: 2,
-            endRow: 40,
-            endCol: 4,
-        };
+        this.selectionObj = null
 
 
 
     }
+
+
 
     adjustCanvasDPI() {
         const dpr = window.devicePixelRatio;
@@ -78,6 +73,7 @@ export default class Canva {
         }
         return i;
     }
+
     render() {
         // Reset transform
         // this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -153,11 +149,11 @@ export default class Canva {
         }
 
         // Draw text
+        let cellTopY = 0;
         for (let r = 0; r < this.rowNumber; r++) {
-            let cellTopY = rowYs[r];
             let cellH = this.masterHobj.getValue(this.rowIndexStartFrm + r);
 
-            let cellX = 0; // Start X at 0 within canvas
+            let cellX = 0;
             for (let c = 0; c < this.colNumber; c++) {
                 let cellW = this.masterWobj.getValue(this.colIndexStartFrm + c);
 
@@ -172,7 +168,10 @@ export default class Canva {
 
                 cellX += cellW;
             }
+
+            cellTopY += cellH;
         }
+
 
 
 
@@ -181,7 +180,8 @@ export default class Canva {
 
 
         // Draw selection rectangle if active
-        if (this.selectionObj.Draw) {
+        // Draw selection rectangle if active
+        if (true) {
             const { startRow, startCol, endRow, endCol } = this.selectionObj;
 
             const visStartRow = this.rowIndexStartFrm;
@@ -189,81 +189,150 @@ export default class Canva {
             const visStartCol = this.colIndexStartFrm;
             const visEndCol = visStartCol + this.colNumber - 1;
 
+            // If no overlap with this canvas, skip
             if (
-                endRow >= visStartRow && startRow <= visEndRow &&
-                endCol >= visStartCol && startCol <= visEndCol
+                Math.max(startRow, endRow) < visStartRow || Math.min(startRow, endRow) > visEndRow ||
+                Math.max(startCol, endCol) < visStartCol || Math.min(startCol, endCol) > visEndCol
             ) {
-                let selectionLeft = 0, selectionTop = 0, selectionRight = 0, selectionBottom = 0;
-
-                for (let r = visStartRow; r < Math.min(startRow, visEndRow + 1); r++) {
-                    selectionTop += this.masterHobj.getValue(r);
-                }
-                selectionBottom = selectionTop;
-                for (let r = Math.max(startRow, visStartRow); r <= Math.min(endRow, visEndRow); r++) {
-                    selectionBottom += this.masterHobj.getValue(r);
-                }
-
-                for (let c = visStartCol; c < Math.min(startCol, visEndCol + 1); c++) {
-                    selectionLeft += this.masterWobj.getValue(c);
-                }
-                selectionRight = selectionLeft;
-                for (let c = Math.max(startCol, visStartCol); c <= Math.min(endCol, visEndCol); c++) {
-                    selectionRight += this.masterWobj.getValue(c);
-                }
-
-                const width = selectionRight - selectionLeft;
-                const height = selectionBottom - selectionTop;
-
-                // Fill selection background
-                this.ctx.fillStyle = "rgba(0, 120, 215, 0.2)";
-                this.ctx.fillRect(selectionLeft, selectionTop, width, height);
-
-                // Set border styles
-                this.ctx.strokeStyle = "rgba(0, 120, 215, 0.8)";
-                this.ctx.lineWidth = 2;
-
-                // Draw borders conditionally based on selection's position relative to this canvas's bounds
-                this.ctx.beginPath();
-
-                if (startRow <= visEndRow && startRow >= visStartRow) {
-                    // top border
-                    this.ctx.moveTo(selectionLeft, selectionTop);
-                    this.ctx.lineTo(selectionRight, selectionTop);
-                }
-                if (endCol <= visEndCol && endCol >= visStartCol) {
-                    // right border
-                    this.ctx.moveTo(selectionRight, selectionTop);
-                    this.ctx.lineTo(selectionRight, selectionBottom);
-                }
-                if (endRow <= visEndRow && endRow >= visStartRow) {
-                    // bottom border
-                    this.ctx.moveTo(selectionRight, selectionBottom);
-                    this.ctx.lineTo(selectionLeft, selectionBottom);
-                }
-                if (startCol <= visEndCol && startCol >= visStartCol) {
-                    // left border
-                    this.ctx.moveTo(selectionLeft, selectionBottom);
-                    this.ctx.lineTo(selectionLeft, selectionTop);
-                }
-
-                this.ctx.stroke();
+                return;
             }
+
+            // Normalize selection boundaries
+            const selStartRow = Math.min(startRow, endRow);
+            const selEndRow = Math.max(startRow, endRow);
+            const selStartCol = Math.min(startCol, endCol);
+            const selEndCol = Math.max(startCol, endCol);
+
+            // Compute selection top and bottom positions within this canvas
+            let selectionTop = 0;
+            for (let r = visStartRow; r < Math.min(selStartRow, visEndRow + 1); r++) {
+                selectionTop += this.masterHobj.getValue(r);
+            }
+
+            let selectionBottom = selectionTop;
+            for (let r = Math.max(selStartRow, visStartRow); r <= Math.min(selEndRow, visEndRow); r++) {
+                selectionBottom += this.masterHobj.getValue(r);
+            }
+
+            // Compute selection left and right positions within this canvas
+            let selectionLeft = 0;
+            for (let c = visStartCol; c < Math.min(selStartCol, visEndCol + 1); c++) {
+                selectionLeft += this.masterWobj.getValue(c);
+            }
+
+            let selectionRight = selectionLeft;
+            for (let c = Math.max(selStartCol, visStartCol); c <= Math.min(selEndCol, visEndCol); c++) {
+                selectionRight += this.masterWobj.getValue(c);
+            }
+
+            const width = selectionRight - selectionLeft;
+            const height = selectionBottom - selectionTop;
+
+            // Fill selection background
+            this.ctx.fillStyle = "rgba(0, 120, 215, 0.2)";
+            this.ctx.fillRect(selectionLeft, selectionTop, width, height);
+
+            // Set border styles
+            this.ctx.strokeStyle = "rgba(0, 120, 215, 0.8)";
+            this.ctx.lineWidth = 2;
+
+            // Draw borders
+            this.ctx.beginPath();
+
+            // top border
+            if (selStartRow <= visEndRow && selStartRow >= visStartRow) {
+                this.ctx.moveTo(selectionLeft, selectionTop);
+                this.ctx.lineTo(selectionRight, selectionTop);
+            }
+
+            // right border
+            if (selEndCol <= visEndCol && selEndCol >= visStartCol) {
+                this.ctx.moveTo(selectionRight, selectionTop);
+                this.ctx.lineTo(selectionRight, selectionBottom);
+            }
+
+            // bottom border
+            if (selEndRow <= visEndRow && selEndRow >= visStartRow) {
+                this.ctx.moveTo(selectionRight, selectionBottom);
+                this.ctx.lineTo(selectionLeft, selectionBottom);
+            }
+
+            // left border
+            if (selStartCol <= visEndCol && selStartCol >= visStartCol) {
+                this.ctx.moveTo(selectionLeft, selectionBottom);
+                this.ctx.lineTo(selectionLeft, selectionTop);
+            }
+
+            this.ctx.stroke();
         }
+
 
 
 
     }
 
+    getCellAtPosition(x, y) {
+        // Calculate canvas offset within the parent container
+        const canvasOffsetY = this.masterHobj.cnvdM.getPrefVal(this.canvaRowIndex);
+        const canvasOffsetX = this.masterWobj.cnvdM.getPrefVal(this.canvaColIndex);
+
+        // Convert to canvas-relative positions
+        const localX = x - canvasOffsetX;
+        const localY = y - canvasOffsetY;
+
+        // Check if click is outside this canvas
+        if (localX < 0 || localY < 0 ||
+            localX >= this.canvaWidth || localY >= this.canvaHeight) {
+            return null;
+        }
+
+        // Now scan rows and cols
+        let rowIdx = this.rowIndexStartFrm;
+        let colIdx = this.colIndexStartFrm;
+
+        let currentY = 0;
+        let currentX = 0;
+
+        // Find the row index
+        for (; rowIdx < this.rowIndexStartFrm + this.rowNumber; rowIdx++) {
+            let h = this.masterHobj.getValue(rowIdx);
+            if (localY >= currentY && localY < currentY + h) {
+                break;
+            }
+            currentY += h;
+        }
+        if (rowIdx >= this.rowIndexStartFrm + this.rowNumber) return null;
+
+        // Find the column index
+        for (; colIdx < this.colIndexStartFrm + this.colNumber; colIdx++) {
+            let w = this.masterWobj.getValue(colIdx);
+            if (localX >= currentX && localX < currentX + w) {
+                break;
+            }
+            currentX += w;
+        }
+        if (colIdx >= this.colIndexStartFrm + this.colNumber) return null;
+
+        // Return cell indices
+        return { row: rowIdx, col: colIdx };
+    }
+
     findCell(x, y) {
+        const container = document.getElementById("canvaManager");
+        const rect = container.getBoundingClientRect();
+
+        const relativeX = x + container.scrollLeft;
+        const relativeY = y + container.scrollTop;
+
         let tmpY = this.rowIndexStartFrm;
         let tmpX = this.colIndexStartFrm;
 
-        // Starting position of this canvas
-        let posY = this.masterHobj.cnvdM.getPrefVal(this.canvaRowIndex);
-        let posX = this.masterWobj.cnvdM.getPrefVal(this.canvaColIndex);
+        // Starting position of this canvas inside parent
+        let canvasPosY = this.masterHobj.cnvdM.getPrefVal(this.canvaRowIndex);
+        let canvasPosX = this.masterWobj.cnvdM.getPrefVal(this.canvaColIndex);
 
-        let currentY = posY;
-        let currentX = posX;
+        let currentY = canvasPosY;
+        let currentX = canvasPosX;
 
         let cellTop = -1;
         let cellLeft = -1;
@@ -271,43 +340,44 @@ export default class Canva {
         // Find row index and top position
         for (; tmpY < this.rowNumber + this.rowIndexStartFrm; tmpY++) {
             let cellHeight = this.masterHobj.getValue(tmpY);
-            if (y >= currentY && y < currentY + cellHeight) {
+            if (relativeY >= currentY && relativeY < currentY + cellHeight) {
                 cellTop = currentY;
                 break;
             }
             currentY += cellHeight;
         }
 
-        // If not found — exit early
         if (tmpY >= this.rowNumber + this.rowIndexStartFrm) return null;
 
         // Find col index and left position
         for (; tmpX < this.colNumber + this.colIndexStartFrm; tmpX++) {
             let cellWidth = this.masterWobj.getValue(tmpX);
-            if (x >= currentX && x < currentX + cellWidth) {
+            if (relativeX >= currentX && relativeX < currentX + cellWidth) {
                 cellLeft = currentX;
                 break;
             }
             currentX += cellWidth;
         }
 
-        // If not found — exit early
         if (tmpX >= this.colNumber + this.colIndexStartFrm) return null;
 
-        // Now both row & col are valid — set into inputElmObj
-        // if ( this.inputElmObj.canvaRowInd == this.canvaRowIndex && this.inputElmObj.canvaColInd == this.canvaColIndex && this.inputElmObj.isCellValueChanged ) {
-        //     this.cellDataObj.set( this.inputElmObj.cellRow, this.inputElmObj.cellCol, this.inputElmObj._inpElm.value );
-        //     this.render();
-        // }
-        this.inputElmObj.beforeRenderHandler();
-        this.inputElmObj
-        this.inputElmObj.posX = cellLeft;
-        this.inputElmObj.posY = cellTop;
-        this.inputElmObj.canvaColInd = this.canvaColIndex;
-        this.inputElmObj.canvaRowInd = this.canvaRowIndex;
-        this.inputElmObj.cellRow = tmpY;
-        this.inputElmObj.cellCol = tmpX;
-        this.inputElmObj.render({ posX: cellLeft, posY: cellTop });
+        // Update input element position and metadata
+        // this.inputElmObj.beforeRenderHandler();
+        // this.inputElmObj.posX = cellLeft;
+        // this.inputElmObj.posY = cellTop;
+        // this.inputElmObj.canvaColInd = this.canvaColIndex;
+        // this.inputElmObj.canvaRowInd = this.canvaRowIndex;
+        // this.inputElmObj.cellRow = tmpY;
+        // this.inputElmObj.cellCol = tmpX;
+        // this.inputElmObj.render({ posX: cellLeft, posY: cellTop });
+
+        // Return computed values relative to parent (which cellLeft and cellTop already are)
+        return {
+            posX: cellLeft,
+            posY: cellTop,
+            row: tmpY,
+            col: tmpX
+        };
     }
 
 
@@ -320,13 +390,14 @@ export default class Canva {
         this.inpElm.style.width = this.masterWobj.getValue(obj.col) + "px";
     }
 
-
     changeVal(r, c, val) {
         // Value-changing logic here
     }
 
     _initialize(cellHeight = 20, cellWidth = 100, rowNumber = 0, colNumber = 0) {
 
+        this._canva.setAttribute('row', this.canvaRowIndex)
+        this._canva.setAttribute('column', this.canvaColIndex)
         this._canva.addEventListener('click', (e) => {
             const container = document.getElementById("canvaManager");
             const rect = container.getBoundingClientRect();

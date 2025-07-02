@@ -6,6 +6,7 @@ import ColLabelCanva from "./Canvas/ColLabelCanva.js";
 import CellData from "./DataStructure/CellData.js";
 import Canva from "./Canvas/DataCanvas.js";
 import InputTxt from "./Canvas/inputElm.js";
+import Selectors from "./utils/eventHandlers.js";
 /*
 what to do next 
 
@@ -87,13 +88,20 @@ class CanvasManager {
 
         this._isInstantRenderRequire = true;
 
-        this.inputStateM = new InputTxt( );
-        this.inputStateM.masterHobj = this.rowM;
-        this.inputStateM.masterWobj = this.colM;
-        this.inputStateM.colsPerCanva = this.colsPerCanva
-        this.inputStateM.rowsPerCanva = this.rowsPerCanva;
+        // this.inputStateM = new InputTxt( );
+        // this.inputStateM.masterHobj = this.rowM;
+        // this.inputStateM.masterWobj = this.colM;
+        // this.inputStateM.colsPerCanva = this.colsPerCanva
+        // this.inputStateM.rowsPerCanva = this.rowsPerCanva;
+        //     this.inputStateM.cellDataObj = this.cellDataObj;
+
         this.cellDataObj = new CellData()
-        this.inputStateM.cellDataObj = this.cellDataObj;
+
+
+        this.Selectors = new Selectors(this.viewPort, this.cnvInst);
+        this.Selectors.masterHobj = this.rowM;
+        this.Selectors.masterWobj = this.colM;
+        this.Selectors.cellDataObj = this.cellDataObj;
     }
 
     resizingHandler(obj) {
@@ -178,8 +186,6 @@ class CanvasManager {
                 tmp.render();
             }
         }
-
-        this.inputStateM.render();
     }
 
     renderAll() {
@@ -389,9 +395,9 @@ class CanvasManager {
         inst._canva.style.top = this.rowM.cnvdM.getPrefVal(row) + "px";
         inst._canva.style.left = this.colM.cnvdM.getPrefVal(col) + "px";
         inst._canva.id = row + "_" + col;
-        inst.cellDataObj  = this.cellDataObj;
-        inst.inputElmObj = this.inputStateM;
-        inst.resizeHandler = this.instantScrollRender.bind( this );
+        inst.cellDataObj = this.cellDataObj;
+        inst.resizeHandler = this.instantScrollRender.bind(this);
+        inst.selectionObj = this.Selectors.selectionObj;
         return inst;
     }
 
@@ -554,9 +560,9 @@ class CanvasManager {
 
     }
 
-    handleInputChange( canvaRow, canvCol ) {
-        let obj = this.cnvInst.get( canvaRow, canvCol );
-        if ( obj ) {
+    handleInputChange(canvaRow, canvCol) {
+        let obj = this.cnvInst.get(canvaRow, canvCol);
+        if (obj) {
             obj.render();
         }
     }
@@ -618,18 +624,13 @@ class CanvasManager {
         this.rowM.defaultUnit = this.cellHeight;
         this.colM.defaultUnit = this.cellWidth;
         this.instantScrollRender(2);
-        this.inputStateM.posX =this.rowLabelCanvaW;
-        this.inputStateM.posY =  this.colLabelCanvaH;
-        this.inputStateM.canvaObj = this.cnvInst.get( 0, 0 );
-        this.inputStateM.setCanvaObj( this.cnvInst.get( 0, 0 ) );
-        this.inputStateM.renderHandler = this.handleInputChange.bind(this);
-        this.inputStateM.initialize()
-        this.inputStateM.render();
+
+        this.Selectors.attachListeners()
 
 
         // setting input pos 
 
-        const hideElm = document.getElementById( "hideDiv" );
+        const hideElm = document.getElementById("hideDiv");
         hideElm.style.height = this.colLabelCanvaH + "px";
         hideElm.style.width = this.rowLabelCanvaW + "px";
 
