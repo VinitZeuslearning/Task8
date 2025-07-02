@@ -83,51 +83,54 @@ export default class ColLabelCanva {
         return label;
     }
 
-    mouseDownDistanceHandler(e) {
-        this.state.resizing = true;
+    // mouseDownDistanceHandler(e) {
+    //     this.state.resizing = true;
 
-        const canvas = e.target;
-        const rect = canvas.getBoundingClientRect();
+    //     const canvas = e.target;
+    //     const rect = canvas.getBoundingClientRect();
 
-        let startX = e.clientX - rect.left;
-        let startY = e.clientY - rect.top;
+    //     let startX = e.clientX - rect.left;
+    //     let startY = e.clientY - rect.top;
 
-        // Set resize cursor on mousedown
-        canvas.style.cursor = 'col-resize';
+    //     // Set resize cursor on mousedown
+    //     canvas.style.cursor = 'col-resize';
 
-        const onMouseMove = (ev) => {
-            const endX = ev.clientX - rect.left;
-            const endY = ev.clientY - rect.top;
+    //     const onMouseMove = (ev) => {
+    //         const endX = ev.clientX - rect.left;
+    //         const endY = ev.clientY - rect.top;
 
-            const dx = endX - startX;
-            const dy = endY - startY;
+    //         const dx = endX - startX;
+    //         const dy = endY - startY;
 
 
 
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            console.log(`Mouse moved: ${distance}px`);
+    //         const distance = Math.sqrt(dx * dx + dy * dy);
+    //         console.log(`Mouse moved: ${distance}px`);
 
-            // Revert cursor to default on mouseup
+    //         // Revert cursor to default on mouseup
 
-            this.parentRef.resizingHandler({ canvaCol: this.canvaColNumber, extra: dx, colNumber: this.mouseOnIndx - 1 });
-            startX += dx;
-            startY += dy;
-        };
+    //         this.parentRef.resizingHandler({ canvaCol: this.canvaColNumber, extra: dx, colNumber: this.mouseOnIndx - 1 });
+    //         startX += dx;
+    //         startY += dy;
+    //     };
 
-        onMouseMove.bind(this);
+    //     onMouseMove.bind(this);
 
-        window.addEventListener('mousemove', onMouseMove);
-        const onMouseUp = (e) => {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-            canvas.style.cursor = 'default';
-            this.state.resizing = false;
-        }
-        window.addEventListener('mouseup', onMouseUp);
-    }
+    //     window.addEventListener('mousemove', onMouseMove);
+    //     const onMouseUp = (e) => {
+    //         window.removeEventListener('mousemove', onMouseMove);
+    //         window.removeEventListener('mouseup', onMouseUp);
+    //         canvas.style.cursor = 'default';
+    //         this.state.resizing = false;
+    //     }
+    //     window.addEventListener('mouseup', onMouseUp);
+    // }
 
-    isOnLine(x, y) {
-        let threshold = 2;
+    isOnLine(xpos, ypos) {
+         this.rect = this._canva.getBoundingClientRect();
+        let x = xpos - this.rect.left;
+        let y = ypos - this.rect.top
+        let threshold = 5;
         if (y >= 0 && y < this.height) {
             let tmp = this.colMobj.getValue(this.colStartFrm);
             let col = this.colStartFrm + 1;
@@ -149,31 +152,31 @@ export default class ColLabelCanva {
         this.colCountStart = ColLabelCanva.getColumnLabelFromNumber(colCountStartNumber);
         this.colStartFrm = this.colNumber * this.canvaColNumber;
         this.render();
-        this._canva.addEventListener('mousedown', (e) => {
-            if ((this.mouseOnIndx != -1) && this.state.resizePointer) {
-                this.mouseDownDistanceHandler(e);
-            }
-        });
-        this._canva.addEventListener('mousemove', (e) => {
-            if (this.state.resizing) {
-                return;
-            }
-            this.rect = this._canva.getBoundingClientRect();
-            let x = e.clientX - this.rect.left;
-            let y = e.clientY - this.rect.top;
-            // console.log(this.rect.top)
-            let tmp = this.isOnLine(x, y);
-            console.log(x);
-            if (tmp != -1) {
-                this.state.resizePointer = true;
-                this._canva.style.cursor = 'col-resize';
-                this.mouseOnIndx = tmp;
-                console.log("on row line " + this.mouseOnIndx)
-            } else {
-                this._canva.style.cursor = 'pointer'
-                this.mouseOnIndx = -1;
-            }
-        })
+        // this._canva.addEventListener('mousedown', (e) => {
+        //     if ((this.mouseOnIndx != -1) && this.state.resizePointer) {
+        //         this.mouseDownDistanceHandler(e);
+        //     }
+        // });
+        // this._canva.addEventListener('mousemove', (e) => {
+        //     if (this.state.resizing) {
+        //         return;
+        //     }
+        //     this.rect = this._canva.getBoundingClientRect();
+        //     let x = e.clientX - this.rect.left;
+        //     let y = e.clientY - this.rect.top;
+        //     // console.log(this.rect.top)
+        //     let tmp = this.isOnLine(x, y);
+        //     console.log(x);
+        //     if (tmp != -1) {
+        //         this.state.resizePointer = true;
+        //         this._canva.style.cursor = 'col-resize';
+        //         this.mouseOnIndx = tmp;
+        //         console.log("on row line " + this.mouseOnIndx)
+        //     } else {
+        //         this._canva.style.cursor = 'pointer'
+        //         this.mouseOnIndx = -1;
+        //     }
+        // })
     }
 
     getNextColumnLabel(colLabel) {

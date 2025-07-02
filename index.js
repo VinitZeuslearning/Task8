@@ -102,6 +102,9 @@ class CanvasManager {
         this.Selectors.masterHobj = this.rowM;
         this.Selectors.masterWobj = this.colM;
         this.Selectors.cellDataObj = this.cellDataObj;
+        this.Selectors.rowLableInstant = this.rowCnvLabelInst
+        this.Selectors.colLableInstant = this.colCnvLabelInst
+        this.Selectors.resizingHandler = this.resizingHandler.bind( this )
     }
 
     resizingHandler(obj) {
@@ -314,6 +317,8 @@ class CanvasManager {
         this.rowCnvLabelInst.set(r, labelElm);
         labelElm._canva.style.left = this.scrollLeft + "px";
         labelElm._canva.style.top = this.rowM.cnvdM.getPrefVal(r) + "px";
+        labelElm._canva.setAttribute( 'type', 'RowLabel' )
+        labelElm._canva.setAttribute( 'row', r )
         labelElm.rowMobj = this.rowM;
         labelElm.rowNumber = (r + 1) * this.rowsPerCanva;
         this.canvaMagnagerElm.append(labelElm._canva);
@@ -328,6 +333,8 @@ class CanvasManager {
         labelElm.canvaColNumber = c;
         this.colCnvLabelInst.set(c, labelElm);
         this.canvaMagnagerElm.append(labelElm._canva);
+        labelElm._canva.setAttribute( 'type', 'ColLabel' )
+        labelElm._canva.setAttribute( 'column', c )
         labelElm._canva.id = "C" + c;
         labelElm._canva.style.top = this.scrollTop + "px";
         labelElm.colMobj = this.colM;
@@ -395,6 +402,7 @@ class CanvasManager {
         inst._canva.style.top = this.rowM.cnvdM.getPrefVal(row) + "px";
         inst._canva.style.left = this.colM.cnvdM.getPrefVal(col) + "px";
         inst._canva.id = row + "_" + col;
+        inst._canva.setAttribute( 'type', "cell" )
         inst.cellDataObj = this.cellDataObj;
         inst.resizeHandler = this.instantScrollRender.bind(this);
         inst.selectionObj = this.Selectors.selectionObj;

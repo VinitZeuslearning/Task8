@@ -2,7 +2,10 @@ export default class Selectors {
     constructor(parentContainer, canvaInstant) {
         this.parent = parentContainer;
         this.canvaInstant = canvaInstant;
+        this.rowLableInstant = null;
+        this.colLableInstant = null;
         this.isSelecting = false;
+        this.resizingHandler = null;
 
 
         this.masterHobj = null;
@@ -14,6 +17,28 @@ export default class Selectors {
             endRow: 0,
             endCol: 0
         };
+
+        this.state = {
+            resizing: false,
+            resizeType: null,    // 'row' | 'col'
+            colLabel: null,
+            rowLabel: null,
+            colNumber: null,
+            rowNumber: null,
+            startX: 0,
+            startY: 0
+        }
+        this.interactionContext = {
+            mode: null,         // 'select' | 'resize-col' | 'resize-row'
+            startX: 0,
+            startY: 0,
+            colLabel: null,
+            rowLabel: null,
+            colNumber: null,
+            rowNumber: null
+        };
+
+
 
         this.prevStartCanvaRow = null;
         this.prevEndCanvaRow = null;
@@ -59,6 +84,9 @@ export default class Selectors {
         //     this.inputElem.style.display = 'none';
         // });
 
+        this.inputElem.style.height = 0 + "px"
+        this.inputElem.style.width = 0 + "px"
+
         this.inputElem.addEventListener('keydown', (ev) => {
             if (ev.key === 'Enter') {
                 this.commitInputValue();
@@ -67,6 +95,37 @@ export default class Selectors {
         });
 
     }
+
+    repositionActiveInput() {
+        // If no active input, skip
+        if (this.activeInputRow === undefined || this.activeInputCol === undefined) return;
+
+        const row = this.activeInputRow;
+        const col = this.activeInputCol;
+
+        // Get the canvas this cell lives in
+        const canvaRow = Math.floor(row / 20);
+        const canvaCol = Math.floor(col /8);
+
+        // Compute new top position by adding up heights of rows before `row`
+        let top = this.masterHobj.cnvdM.getPrefVal( canvaRow );
+        for (let r = 0; r < row; r++) {
+            top += this.masterHobj.getValue(r);
+        }
+
+        // Compute new left position by adding up widths of cols before `col`
+        let left = this.masterWobj.cnvdM.getPrefVal( canvaCol );
+        for (let c = 0; c < col; c++) {
+            left += this.masterWobj.getValue(c);
+        }
+
+        // Set new position and size for input element
+        this.inputElem.style.top = `${top}px`;
+        this.inputElem.style.left = `${left}px`;
+        this.inputElem.style.width = `${this.masterWobj.getValue(col)}px`;
+        this.inputElem.style.height = `${this.masterHobj.getValue(row)}px`;
+    }
+
 
     getRelativePos(e) {
         const rect = this.parent.getBoundingClientRect();
@@ -77,8 +136,138 @@ export default class Selectors {
     }
 
     handleMouseDown(e) {
-        this.isSelecting = true;
+        const type = e.target.getAttribute('type');
 
+        if (type === 'cell') {
+            this.isSelecting = true;
+            this.interactionContext.mode = 'select';
+            this.cellSelection(e);
+            return;
+        }
+
+        if (type === 'ColLabel') {
+            const colLabel = this.colLableInstant.get(Number(e.target.getAttribute('column')));
+            const x = e.clientX;
+            const y = e.clientY;
+
+            const onLine = colLabel.isOnLine(x, y);
+            if (onLine !== -1) {
+                this.interactionContext.mode = 'resize-col';
+                this.interactionContext.startX = e.clientX;
+                this.interactionContext.colLabel = colLabel;
+                this.interactionContext.colNumber = onLine - 1;
+            }
+        }
+
+        if (type === 'RowLabel') {
+            const rowLabel = this.rowLableInstant.get(Number(e.target.getAttribute('row')));
+            const x = e.clientX;
+            const y = e.clientY;
+
+            const onLine = rowLabel.isOnLine(x, y);
+            if (onLine !== -1) {
+                this.interactionContext.mode = 'resize-row';
+                this.interactionContext.startY = e.clientY;
+                this.interactionContext.rowLabel = rowLabel;
+                this.interactionContext.rowNumber = onLine - 1;
+            }
+        }
+    }
+
+
+    handleMouseMove(e) {
+        const ctx = this.interactionContext;
+        const type = e.target.getAttribute('type');
+
+        // If resizing is happening — handle it unconditionally
+        if (ctx.mode === 'resize-row') {
+            document.body.style.cursor = 'row-resize';
+            const dy = Math.floor(e.clientY - ctx.startY);
+            this.resizingHandler({
+                canvaRow: ctx.rowLabel.canvaRowNumber,
+                extra: dy,
+                rowNumber: ctx.rowNumber
+            });
+            ctx.startY = e.clientY;
+
+            // Only resize input if it's on this row
+            if (this.activeInputRow === ctx.rowNumber) {
+                this.inputElem.style.height = this.masterHobj.getValue(ctx.rowNumber) + "px";
+            }
+
+            // Reposition input if necessary
+            this.repositionActiveInput();
+
+            return;
+        }
+
+
+        if (ctx.mode === 'resize-col') {
+            document.body.style.cursor = 'col-resize';
+            const dx = Math.floor(e.clientX - ctx.startX);
+            this.resizingHandler({
+                canvaCol: ctx.colLabel.canvaColNumber,
+                extra: dx,
+                colNumber: ctx.colNumber
+            });
+            ctx.startX = e.clientX;
+
+            // Only resize input if it's on this col
+            if (this.activeInputCol === ctx.colNumber) {
+                this.inputElem.style.width = this.masterWobj.getValue(ctx.colNumber) + "px";
+            }
+
+            // Reposition input if necessary
+            this.repositionActiveInput();
+
+            return;
+        }
+
+
+
+        // ROW LABEL HOVER DETECTION
+        if (type === "RowLabel") {
+            const rowNum = Number(e.target.getAttribute('row'));
+            const rowLabel = this.rowLableInstant.get(rowNum);
+            const isOnLine = rowLabel.isOnLine(e.clientX, e.clientY);
+
+            if (isOnLine !== -1) {
+                document.body.style.cursor = 'row-resize';
+            } else {
+                document.body.style.cursor = 'default';
+            }
+            return;
+        }
+
+        // COL LABEL HOVER DETECTION
+        if (type === "ColLabel") {
+            const colNum = Number(e.target.getAttribute('column'));
+            const colLabel = this.colLableInstant.get(colNum);
+            const isOnLine = colLabel.isOnLine(e.clientX, e.clientY);
+
+            if (isOnLine !== -1) {
+                document.body.style.cursor = 'col-resize';
+            } else {
+                document.body.style.cursor = 'default';
+            }
+            return;
+        }
+
+        // CELL SELECTION MOVEMENT
+        if (ctx.mode === 'select' && type === 'cell') {
+            this.cellSelectionMouseMove(e);
+            return;
+        }
+
+        // Fallback: default cursor when not over labels or cells
+        if (ctx.mode === null) {
+            document.body.style.cursor = 'default';
+        }
+    }
+
+
+
+    cellSelection(e) {
         const canvaRow = Number(e.target.getAttribute('row'));
         const canvaCol = Number(e.target.getAttribute('column'));
         const cnvInst = this.canvaInstant.get(canvaRow, canvaCol);
@@ -167,11 +356,7 @@ export default class Selectors {
         }
     }
 
-
-
-    handleMouseMove(e) {
-        if (!this.isSelecting) return;
-
+    cellSelectionMouseMove(e) {
         const canvaRow = Number(e.target.getAttribute('row'));
         const canvaCol = Number(e.target.getAttribute('column'));
         const cnvInst = this.canvaInstant.get(canvaRow, canvaCol);
@@ -210,7 +395,22 @@ export default class Selectors {
         this.prevEndCanvaCol = currEndCanvaCol;
     }
 
+
+
+
     handleMouseUp() {
         this.isSelecting = false;
+        document.body.style.cursor = 'default';
+        this.interactionContext = {
+            mode: null,
+            startX: 0,
+            startY: 0,
+            colLabel: null,
+            rowLabel: null,
+            colNumber: null,
+            rowNumber: null
+        };
     }
+
+
 }

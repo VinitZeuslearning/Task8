@@ -62,8 +62,8 @@ export default class RowLabelCanva {
 
             // Draw horizontal line at top of this row
             this.ctx.beginPath();
-            this.ctx.moveTo(0, y + 0.5 );
-            this.ctx.lineTo(this.ctx.canvas.width, y + 0.5 );
+            this.ctx.moveTo(0, y + 0.5);
+            this.ctx.lineTo(this.ctx.canvas.width, y + 0.5);
             this.ctx.stroke();
 
             // Draw row number text centered vertically in row
@@ -76,64 +76,15 @@ export default class RowLabelCanva {
             rowPos += rowHeight;
         }
 
-        // ❌ No final bottom line — intentionally left open
-
-        // this.ctx.restore();
-
-        // Position this canvas in the scrollable grid space
         this._canva.style.left = this.parentRef.scrollLeft + "px";
         this._canva.style.top = this.rowMobj.cnvdM.getPrefVal(this.canvaRowNumber) + "px";
     }
 
-
-    mouseDownDistanceHandler(e) {
-        this.state.resizing = true;
-
-        const canvas = e.target;
-        const rect = canvas.getBoundingClientRect();
-
-        let startX = e.clientX - rect.left;
-        let startY = e.clientY - rect.top;
-
-        // Set resize cursor on mousedown
-        canvas.style.cursor = 'row-resize';
-
-        const onMouseMove = (ev) => {
-            const endX = ev.clientX - rect.left;
-            const endY = ev.clientY - rect.top;
-
-            const dx = endX - startX;
-            const dy = endY - startY;
-
-            if (dy > 10) {
-                console.log()
-            }
-
-
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            console.log(`Mouse moved: ${distance}px`);
-
-            // Revert cursor to default on mouseup
-
-            this.parentRef.resizingHandler({ canvaRow: this.canvaRowNumber, extra: Math.floor(dy), rowNumber: this.moseOnIndx - 1 });
-            startX += dx;
-            startY += dy;
-        };
-
-        onMouseMove.bind(this);
-
-        window.addEventListener('mousemove', onMouseMove);
-        const onMouseUp = (e) => {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-            canvas.style.cursor = 'default';
-            this.state.resizing = false;
-        }
-        window.addEventListener('mouseup', onMouseUp);
-    }
-
-    isOnLine(x, y) {
-        let threshold = 2;
+    isOnLine(xpos, ypos) {
+        this.rect = this._canva.getBoundingClientRect();
+        let x = xpos - this.rect.left;
+        let y = ypos - this.rect.top;
+        let threshold = 5;
         if (x >= 0 && x < this.width) {
             let tmp = this.rowMobj.getValue(this.rowStartFrm);
             let row = this.rowStartFrm + 1;
@@ -160,32 +111,30 @@ export default class RowLabelCanva {
         this.rowStartFrm = this.rowNumber * this.canvaRowNumber;
         this.render();
         this.rect = this._canva.getBoundingClientRect();
-        this._canva.addEventListener('mousedown', (e) => {
-            if ((this.moseOnIndx != -1) && this.state.resizePointer) {
-                this.mouseDownDistanceHandler(e);
-            }
-        });
+        // this._canva.addEventListener('mousedown', (e) => {
+        //     if ((this.moseOnIndx != -1) && this.state.resizePointer) {
+        //         this.mouseDownDistanceHandler(e);
+        //     }
+        // });
 
-        this._canva.addEventListener('mousemove', (e) => {
-            if (this.state.resizing) {
-                return;
-            }
-            this.rect = this._canva.getBoundingClientRect();
-            let x = e.clientX - this.rect.left;
-            let y = e.clientY - this.rect.top;
-            // console.log(this.rect.top)
-            let tmp = this.isOnLine(x, y);
-            console.log(y);
-            if (tmp != -1) {
-                this.state.resizePointer = true;
-                this._canva.style.cursor = 'row-resize';
-                this.moseOnIndx = tmp;
-                console.log("on row line " + this.moseOnIndx)
-            } else {
-                this._canva.style.cursor = 'pointer'
-                this.moseOnIndx = -1;
-            }
-        })
+        // this._canva.addEventListener('mousemove', (e) => {
+        //     if (this.state.resizing) {
+        //         return;
+        //     }
+
+        //     // console.log(this.rect.top)
+        //     let tmp = this.isOnLine(x, y);
+        //     console.log(y);
+        //     if (tmp != -1) {
+        //         this.state.resizePointer = true;
+        //         this._canva.style.cursor = 'row-resize';
+        //         this.moseOnIndx = tmp;
+        //         console.log("on row line " + this.moseOnIndx)
+        //     } else {
+        //         this._canva.style.cursor = 'pointer'
+        //         this.moseOnIndx = -1;
+        //     }
+        // })
 
 
     }
