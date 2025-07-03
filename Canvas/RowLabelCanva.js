@@ -23,11 +23,13 @@ export default class RowLabelCanva {
         }
         this.rect = this._canva.getBoundingClientRect();
         this.rowStartFrm = this.rowNumber * this.canvaRowNumber;
+        this.slectionObj = null;
         // have to set the rowIndex, androwMobj 
     }
 
     render() {
         // Get current canvas height from row manager
+        console.log( `redering rowlabel canva ${this.canvaRowNumber}` )
         this.height = this.rowMobj.cnvdM.getValue(this.canvaRowNumber);
 
         // Update canvas DOM size
@@ -78,13 +80,89 @@ export default class RowLabelCanva {
 
         this._canva.style.left = this.parentRef.scrollLeft + "px";
         this._canva.style.top = this.rowMobj.cnvdM.getPrefVal(this.canvaRowNumber) + "px";
-    }
 
+        if (this.slectionObj.start == null || this.slectionObj.end == null) {
+            return;
+        }
+
+        // Ensure correct order
+        const selStartRow = Math.min(this.slectionObj.start, this.slectionObj.end);
+        const selEndRow = Math.max(this.slectionObj.start, this.slectionObj.end);
+
+        // Canvas row range
+        const canvasRowStart = this.rowStartFrm;
+        const canvasRowEnd = this.rowStartFrm + this.rowNumber - 1;
+
+        // Skip if no overlap
+        if (selEndRow < canvasRowStart || selStartRow > canvasRowEnd) {
+            return;
+        }
+
+        // Compute pixel positions
+        let selectionTop = 0;
+        rowPos = canvasRowStart;
+        while (rowPos < Math.max(selStartRow, canvasRowStart)) {
+            selectionTop += this.rowMobj.getValue(rowPos);
+            rowPos++;
+        }
+
+        let selectionBottom = selectionTop;
+        while (rowPos <= Math.min(selEndRow, canvasRowEnd)) {
+            selectionBottom += this.rowMobj.getValue(rowPos);
+            rowPos++;
+        }
+
+        const selectionHeight = selectionBottom - selectionTop;
+
+        // Draw selection fill
+        this.ctx.fillStyle = "rgba(0, 120, 215, 0.2)";
+        this.ctx.fillRect(0, selectionTop, this.width, selectionHeight);
+
+        // Draw selection border
+        this.ctx.strokeStyle = "rgba(0, 120, 215, 0.8)";
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+
+        // Left border (always)
+        this.ctx.moveTo(0, selectionTop);
+        this.ctx.lineTo(0, selectionBottom);
+
+        // Right border (always)
+        this.ctx.moveTo(this.width, selectionTop);
+        this.ctx.lineTo(this.width, selectionBottom);
+
+        // Top border (if selStartRow inside canvas)
+        if (selStartRow >= canvasRowStart && selStartRow <= canvasRowEnd) {
+            this.ctx.moveTo(0, selectionTop);
+            this.ctx.lineTo(this.width, selectionTop);
+        }
+
+        // Bottom border (if selEndRow inside canvas)
+        if (selEndRow >= canvasRowStart && selEndRow <= canvasRowEnd) {
+            this.ctx.moveTo(0, selectionBottom);
+            this.ctx.lineTo(this.width, selectionBottom);
+        }
+
+        this.ctx.stroke();
+
+    }
+    findRow(y) {
+
+        let posY = this.rowMobj.cnvdM.getPrefVal(this.canvaRowNumber);
+        for (let i = this.rowStartFrm; i <= this.rowStartFrm + this.rowNumber; i++) {
+            if (y >= posY && y <= posY + this.rowMobj.getValue(i)) {
+                return i
+            }
+            posY += this.rowMobj.getValue(i);
+        }
+
+        return -1;
+    }
     isOnLine(xpos, ypos) {
         this.rect = this._canva.getBoundingClientRect();
         let x = xpos - this.rect.left;
         let y = ypos - this.rect.top;
-        let threshold = 5;
+        let threshold = 2;
         if (x >= 0 && x < this.width) {
             let tmp = this.rowMobj.getValue(this.rowStartFrm);
             let row = this.rowStartFrm + 1;
