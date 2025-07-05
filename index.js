@@ -212,23 +212,22 @@ class CanvasManager {
     }
 
     renderAll() {
-        // Render all cell canvas instances (two-level map)
-        for (const { value: canvaRowMap } of this.cnvInst.iterateFirstLevel()) {
-            for (const { value: instance } of canvaRowMap.iterateSecondLevel()) {
-                instance.render();
-            }
+        // Render all cell canvas instances (TwoLevelMap)
+        for (const { value: instance } of this.cnvInst.iterate()) {
+            instance.render();
         }
 
-        // Render all column label canvases
+        // Render all column label canvases (simple Map)
         for (const [_, colLabelInstance] of this.colCnvLabelInst) {
             colLabelInstance.render();
         }
 
-        // Render all row label canvases
+        // Render all row label canvases (simple Map)
         for (const [_, rowLabelInstance] of this.rowCnvLabelInst) {
             rowLabelInstance.render();
         }
     }
+
 
 
     removeRow(r, isLabel = true) {
@@ -680,6 +679,14 @@ class CanvasManager {
         document.getElementById("jsonFileInput").addEventListener("change", (e) => {
             this.handleJsonFileUpload(e);
         });
+
+        const fileInput = document.getElementById("jsonFileInput");
+        const uploadBtn = document.getElementById("uploadBtn");
+
+        uploadBtn.addEventListener("click", () => {
+            fileInput.click();
+        });
+
     }
 
 
@@ -721,9 +728,11 @@ class CanvasManager {
         jsonArray.forEach((item, rowIndex) => {
             const dataRow = rowIndex + 1;  // row 1, 2, 3...
             keys.forEach((key, colIndex) => {
-                this.cellDataObj.set(dataRow, colIndex, item[key]);
+                this.cellDataObj.set(dataRow, colIndex, `${item[key]}`);
             });
         });
+
+        this.renderAll()
     }
 
 }
