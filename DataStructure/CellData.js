@@ -9,7 +9,7 @@ export default class CellData {
         }
         const rowMap = this.data.get(row);
 
-        if (value === undefined || value === null || value == "") {
+        if (value === undefined || value === null || value === "") {
             rowMap.delete(col);
             if (rowMap.size === 0) {
                 this.data.delete(row);
@@ -50,5 +50,35 @@ export default class CellData {
 
     delete(row, col) {
         this.set(row, col, undefined);
+    }
+
+    /** 
+     * Shift all row keys >= fromIndex by +1 (downward)
+     */
+    shiftRowKeys(fromIndex) {
+        const newData = new Map();
+
+        for (const [row, colMap] of this.data.entries()) {
+            const newRow = row >= fromIndex ? row + 1 : row;
+            newData.set(newRow, colMap);
+        }
+
+        this.data = newData;
+    }
+
+    /**
+     * Shift all col keys >= fromIndex by +1 (rightward) in every row
+     */
+    shiftColKeys(fromIndex) {
+        for (const [row, colMap] of this.data.entries()) {
+            const newColMap = new Map();
+
+            for (const [col, value] of colMap.entries()) {
+                const newCol = col >= fromIndex ? col + 1 : col;
+                newColMap.set(newCol, value);
+            }
+
+            this.data.set(row, newColMap);
+        }
     }
 }

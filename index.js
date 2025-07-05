@@ -109,6 +109,10 @@ class CanvasManager {
         this.Selectors.scrollCanvaRenderHandler = this.canvaRendereoNScroll.bind(this);
         this.Selectors.scrollEndHandler = this.scrollEndHandler.bind(this);
         this.Selectors.mainContainerRect = this.viewPortRect;
+        this.Selectors.renderAll = this.renderAll.bind(this);
+        this.Selectors.renderAllDataCanva = this.renderAllDataCanva.bind(this);
+        this.Selectors.renderAllRowLable = this.renderAllRowLable.bind( this );
+        this.Selectors.renderAllColLable = this.renderAllColLable.bind( this );
     }
 
     resizingHandler(obj) {
@@ -228,6 +232,23 @@ class CanvasManager {
         }
     }
 
+    renderAllDataCanva() {
+        for (const { value: instance } of this.cnvInst.iterate()) {
+            instance.render();
+        }
+    }
+
+    renderAllColLable( ) {
+        for (const [_, colLabelInstance] of this.colCnvLabelInst) {
+            colLabelInstance.render();
+        }
+    }
+
+    renderAllRowLable( ) {
+        for (const [_, rowLabelInstance] of this.rowCnvLabelInst) {
+            rowLabelInstance.render();
+        }
+    }
 
 
     removeRow(r, isLabel = true) {
