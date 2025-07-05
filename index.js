@@ -1,5 +1,5 @@
 // import RCManager from "./rcManager";
-import TwoLevelMap from "./twolevelmap.js";
+import TwoLevelMap from "./DataStructure/twolevelmap.js";
 import RCManager from "./DataStructure/RmCnvManager.js";
 import RowLabelCanva from "./Canvas/RowLabelCanva.js";
 import ColLabelCanva from "./Canvas/ColLabelCanva.js";
@@ -7,6 +7,7 @@ import CellData from "./DataStructure/CellData.js";
 import Canva from "./Canvas/DataCanvas.js";
 import InputTxt from "./Canvas/inputElm.js";
 import Selectors from "./utils/eventHandlers.js";
+import CommandObj from "./utils/commandObj.js";
 /*
 what to do next 
 
@@ -92,7 +93,7 @@ class CanvasManager {
         // this.inputStateM = new InputTxt( );
         // this.inputStateM.masterHobj = this.rowM;
         // this.inputStateM.masterWobj = this.colM;
-        // this.inputStateM.colsPerCanva = this.colsPerCanva
+        // this.inputStateM.colsPerCanva = this.colsPerCanva;
         // this.inputStateM.rowsPerCanva = this.rowsPerCanva;
         //     this.inputStateM.cellDataObj = this.cellDataObj;
 
@@ -114,6 +115,8 @@ class CanvasManager {
         this.Selectors.renderAllDataCanva = this.renderAllDataCanva.bind(this);
         this.Selectors.renderAllRowLable = this.renderAllRowLable.bind( this );
         this.Selectors.renderAllColLable = this.renderAllColLable.bind( this );
+        // this.Selectors.initialize();
+        
     }
 
     resizingHandler(obj) {
