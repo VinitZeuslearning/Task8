@@ -44,6 +44,7 @@ class CanvasManager {
         this.elmsPerCava = this.rowsPerCanva * this.colsPerCanva;
         this.canvaMagnagerElm = document.getElementById('canvaManager');
         this.viewPort = document.getElementById('InnerContiner');
+        this.hiddenDivElm = document.getElementById('hideDiv');
         this.viewPortRect = this.viewPort.getBoundingClientRect();
         this.canvaH = this.rowsPerCanva * this.cellHeight;
         this.canvaW = this.colsPerCanva * this.cellWidth;
@@ -106,7 +107,7 @@ class CanvasManager {
         this.Selectors.colLableInstant = this.colCnvLabelInst
         this.Selectors.resizingHandler = this.resizingHandler.bind(this);
         this.Selectors.mainContainer = this.viewPort
-        this.Selectors.scrollCanvaRenderHandler = this.canvaRendereoNScroll.bind(this);
+        this.Selectors.scrollCanvaRenderHandler = this.scrollHandler.bind(this);
         this.Selectors.scrollEndHandler = this.scrollEndHandler.bind(this);
         this.Selectors.mainContainerRect = this.viewPortRect;
         this.Selectors.renderAll = this.renderAll.bind(this);
@@ -624,7 +625,7 @@ class CanvasManager {
         }
     }
 
-    canvaRendereoNScroll() {
+    scrollHandler() {
         let dx = Math.abs(this.scrollLeft - this.viewPort.scrollLeft);
         let dy = Math.abs(this.scrollTop - this.viewPort.scrollTop);
 
@@ -663,6 +664,18 @@ class CanvasManager {
                 this.smoothScrollRender(true);
             }
         }
+
+
+        const canvaMagnagerElmRect = this.canvaMagnagerElm.getBoundingClientRect();
+        if (  500 >= canvaMagnagerElmRect.height - this.scrollTop  ) {
+            this.canvaMagnagerElm.style.height =  Math.min( this.scrollTop + 2000 + "px", this.height );
+        }
+
+        if (  500 >= canvaMagnagerElmRect.width -  this.scrollLeft  ) {
+            this.canvaMagnagerElm.style.width = Math.min( this.scrollLeft + 2000 + "px", this.width );
+        }
+
+
     }
 
     scrollEndHandler() {
@@ -674,8 +687,8 @@ class CanvasManager {
         this.updateColLabelPos();
     }
     initialize() {
-        this.canvaMagnagerElm.style.height = this.height + "px";
-        this.canvaMagnagerElm.style.width = this.width + "px";
+        this.canvaMagnagerElm.style.height = 2000 + "px";
+        this.canvaMagnagerElm.style.width = 2000 + "px";
         this.rowM.numberPerCanva = this.rowsPerCanva;
         this.colM.numberPerCanva = this.colsPerCanva;
         this.rowM.defaultUnit = this.cellHeight;

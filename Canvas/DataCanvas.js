@@ -138,7 +138,7 @@ export default class Canva {
 
         this.ctx.textBaseline = "middle";
         this.ctx.textAlign = "center";
-        let charWidth = this.ctx.measureText("W").width;
+        let charWidth = this.ctx.measureText("w").width;
 
         // Precompute cell top positions inside the canvas (starting from 0)
         let rowYs = [];

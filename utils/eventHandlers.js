@@ -216,7 +216,7 @@ export default class Selectors {
         }
 
 
-        if (this.mouseDown) {
+        if (this.mouseDown && ( ctx.mode == 'rowSelect' || ctx.mode == 'colSelect' || ctx.mode == 'cellSelect' ) ) {
             const rect = this.mainContainer.getBoundingClientRect();
             const relX = e.clientX - rect.left;
             const relY = e.clientY - rect.top;
@@ -224,9 +224,9 @@ export default class Selectors {
             const bufferY = 100;
 
             this.autoScroll.right = (relX >= rect.width - bufferX);
-            this.autoScroll.left = (relX <= bufferX) && (ctx.mode != "resize-row") && (ctx.mode != "rowSelect");
+            this.autoScroll.left = (relX <= bufferX) && (ctx.mode != "rowSelect") ;
             this.autoScroll.down = (relY >= rect.height - bufferY);
-            this.autoScroll.up = (relY <= bufferY) && (ctx.mode != "resize-col") && (ctx.mode != "colSelect");
+            this.autoScroll.up = (relY <= bufferY) && (ctx.mode != "colSelect");
             console.log(this.autoScroll)
 
             if (this.autoScroll.right || this.autoScroll.left || this.autoScroll.up || this.autoScroll.down)
@@ -590,9 +590,10 @@ export default class Selectors {
         // this.inputElem.style.display = 'none';
         this.inputElem.style.border = '1px solid #0078d7';
         // this.inputElem.style.outline = 'none';
-        this.inputElem.style.fontSize = '14px';
+        this.inputElem.style.fontSize = '12px';
         this.inputElem.style.boxSizing = 'border-box';
         this.inputElem.style.zIndex = 1000;
+        this.inputElem.style.textAlign = 'center';
 
         this.inputElem.id = "newInputElm"
 
