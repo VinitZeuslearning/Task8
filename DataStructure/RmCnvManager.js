@@ -143,12 +143,18 @@ export default class RCManager {
 
     update(index, newValue) {
         if (newValue === this.defaultUnit) {
+            let prevValue = this.getValue( index );
+            let ind = Math.floor(index / this.numberPerCanva);
+            let tmp = this.cnvdM.getValue(ind)
+            this.cnvdM.update(ind, tmp + ( newValue - prevValue ));
+            
             this.values.delete(index);
         } else {
+            let prevValue = this.getValue( index );
             this.values.set(index, newValue);
             let ind = Math.floor(index / this.numberPerCanva);
             let tmp = this.cnvdM.getValue(ind)
-            this.cnvdM.update(ind, tmp + newValue)
+            this.cnvdM.update(ind, tmp + ( newValue - prevValue ));
         }
     }
     incre(index, extraValue) {
@@ -156,6 +162,7 @@ export default class RCManager {
         if (newValue === this.defaultUnit) {
             this.values.delete(index);
         } else {
+            let prevValue = this.getValue( index );
             this.values.set(index, newValue);
             let ind = Math.floor(index / this.numberPerCanva);
             let tmp = this.cnvdM.getValue(ind)

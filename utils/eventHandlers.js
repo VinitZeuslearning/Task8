@@ -1,3 +1,5 @@
+import BasicMathFuncs from "./basicMathFuncs.js";
+
 export default class Selectors {
     constructor(parentContainer, canvaInstant) {
         this.parent = parentContainer;
@@ -22,6 +24,14 @@ export default class Selectors {
             mode: null, startX: 0, startY: 0, colLabel: null, rowLabel: null, colNumber: null, rowNumber: null, mouseOverState: null
         };
 
+        this.cmdObjState = {
+            row: null,
+            col: null,
+            oldValue: null,
+            newVal: null,
+            type: null
+        }
+
         this.autoScroll = { left: false, right: false, up: false, down: false };
 
         this.prevStartCanvaRow = null;
@@ -45,7 +55,7 @@ export default class Selectors {
         this.scrollCanvaRenderHandler = null;
         this.scrollEndHandler = null;
 
-        this.createInputElement();
+        this.cmdObj = null;
     }
 
     attachListeners() {
@@ -74,6 +84,7 @@ export default class Selectors {
 
     handleMouseDown(e) {
         this.mouseDown = true;
+        this.BasicMathFuncs.clearTempResults();
         const type = e.target.getAttribute('type');
         if (type === 'cell') {
             this.clearColLabelSelection();
@@ -85,7 +96,8 @@ export default class Selectors {
             return;
         }
         if (type === 'ColLabel') {
-            const colLabel = this.colLableInstant.get(Number(e.target.getAttribute('column')));
+            const colNum = Number(e.target.getAttribute('column'));
+            const colLabel = this.colLableInstant.get(colNum);
             const onLine = colLabel.isOnLine(e.clientX, e.clientY);
             if (onLine !== -1) {
                 if (this.interactionContext.mouseOverState == 'colInsert') {
@@ -93,6 +105,9 @@ export default class Selectors {
                     this.renderAllDataCanva();
                 }
                 else if (this.interactionContext.mouseOverState == 'colResize') {
+                    this.cmdObjState.type = 'colResize';
+                    this.cmdObjState.oldValue = this.masterWobj.getValue(onLine - 1);
+                    this.cmdObjState.col = onLine - 1;
                     this.interactionContext.mode = 'resize-col';
                     this.interactionContext.startX = e.clientX;
                     this.interactionContext.colLabel = colLabel;
@@ -107,7 +122,8 @@ export default class Selectors {
             }
         }
         if (type === 'RowLabel') {
-            const rowLabel = this.rowLableInstant.get(Number(e.target.getAttribute('row')));
+            const rowNum = Number(e.target.getAttribute('row'));
+            const rowLabel = this.rowLableInstant.get(rowNum);
             const onLine = rowLabel.isOnLine(e.clientX, e.clientY);
             if (onLine !== -1) {
                 if (this.interactionContext.mouseOverState == "rowInsert") {
@@ -115,6 +131,9 @@ export default class Selectors {
                     this.renderAllDataCanva();
                 }
                 else if (this.interactionContext.mouseOverState == "rowResize") {
+                    this.cmdObjState.type = 'rowResize';
+                    this.cmdObjState.oldValue = this.masterHobj.getValue(onLine - 1);
+                    this.cmdObjState.row = onLine - 1;
                     this.interactionContext.mode = 'resize-row';
                     this.interactionContext.startY = e.clientY;
                     this.interactionContext.rowLabel = rowLabel;
@@ -125,7 +144,7 @@ export default class Selectors {
                 this.interactionContext.mode = 'rowSelect';
                 this.clearColLabelSelection();
                 this.clearCellSelection();
-                this.rowLabelSelection(e)
+                this.rowLabelSelection(e);
             }
         }
     }
@@ -140,6 +159,7 @@ export default class Selectors {
         if (ctx.mode === 'resize-row') {
             document.body.style.cursor = 'row-resize';
             const dy = Math.floor(e.clientY - ctx.startY);
+            this.cmdObjState.newVal = this.masterHobj.getValue(ctx.rowNumber);
             this.resizingHandler({ canvaRow: ctx.rowLabel.canvaRowNumber, extra: dy, rowNumber: ctx.rowNumber });
             ctx.startY = e.clientY;
             if (this.activeInputRow === ctx.rowNumber)
@@ -150,6 +170,7 @@ export default class Selectors {
         else if (ctx.mode === 'resize-col') {
             document.body.style.cursor = 'col-resize';
             const dx = Math.floor(e.clientX - ctx.startX);
+            this.cmdObjState.newVal = this.masterWobj.getValue(ctx.colNumber);
             this.resizingHandler({ canvaCol: ctx.colLabel.canvaColNumber, extra: dx, colNumber: ctx.colNumber });
             ctx.startX = e.clientX;
             if (this.activeInputCol === ctx.colNumber)
@@ -200,9 +221,12 @@ export default class Selectors {
                         ctx.mouseOverState = 'colInsert';
                     }
                     else {
-                        document.body.style.cursor = line !== -1 ? 'col-resize' : 'default';
+                        document.body.style.cursor = 'col-resize';
                         ctx.mouseOverState = 'colResize';
                     }
+                }
+                else {
+                    document.body.style.cursor = 'default'
                 }
             }
         }
@@ -216,7 +240,7 @@ export default class Selectors {
         }
 
 
-        if (this.mouseDown && ( ctx.mode == 'rowSelect' || ctx.mode == 'colSelect' || ctx.mode == 'cellSelect' ) ) {
+        if (this.mouseDown && (ctx.mode == 'rowSelect' || ctx.mode == 'colSelect' || ctx.mode == 'cellSelect')) {
             const rect = this.mainContainer.getBoundingClientRect();
             const relX = e.clientX - rect.left;
             const relY = e.clientY - rect.top;
@@ -224,10 +248,10 @@ export default class Selectors {
             const bufferY = 100;
 
             this.autoScroll.right = (relX >= rect.width - bufferX);
-            this.autoScroll.left = (relX <= bufferX) && (ctx.mode != "rowSelect") ;
+            this.autoScroll.left = (relX <= bufferX) && (ctx.mode != "rowSelect");
             this.autoScroll.down = (relY >= rect.height - bufferY);
             this.autoScroll.up = (relY <= bufferY) && (ctx.mode != "colSelect");
-            console.log(this.autoScroll)
+            // console.log(this.autoScroll)
 
             if (this.autoScroll.right || this.autoScroll.left || this.autoScroll.up || this.autoScroll.down)
                 this.startAutoScroll();
@@ -253,7 +277,18 @@ export default class Selectors {
 
     handleMouseUp() {
         this.isSelecting = false;
+        console.log(`under the mosueUP ${JSON.stringify(this.cmdObjState)}`)
         this.mouseDown = false;
+
+        if (this.cmdObjState.type == 'colResize') {
+            this.cmdObj.pushResizeColCmd(this.cmdObjState.newVal, this.cmdObjState.oldValue, this.cmdObjState.col);
+
+            this.cmdObjState = {};
+        }
+        else if (this.cmdObjState.type == 'rowResize') {
+            this.cmdObj.pushResizeRowCmd(this.cmdObjState.newVal, this.cmdObjState.oldValue, this.cmdObjState.row);
+            this.cmdObjState = {};
+        }
         document.body.style.cursor = 'default';
         this.interactionContext = {
             mode: null,
@@ -270,7 +305,7 @@ export default class Selectors {
 
     startAutoScroll() {
         if (this.autoScrollLoopRunning) return;
-        console.log("autoScrolled is get called")
+        // console.log("autoScrolled is get called")
         this.autoScrollLoopRunning = true;
         const step = 10;
         const scrollLoop = () => {
@@ -295,17 +330,22 @@ export default class Selectors {
     }
 
     commitInputValue() {
-        if (this.inputElem.style.display === 'block') {
-            const row = this.activeInputRow;
-            const col = this.activeInputCol;
-            if (row !== undefined && col !== undefined) {
-                const value = this.inputElem.value;
-                const existingValue = this.cellDataObj.get(row, col);
-                if (value !== existingValue) {
-                    this.cellDataObj.set(row, col, value);
-                }
+
+        const row = this.activeInputRow;
+        const col = this.activeInputCol;
+        if (row !== undefined && col !== undefined) {
+            const value = this.inputElem.value;
+            const existingValue = this.cellDataObj.get(row, col);
+            if ( value == existingValue ) {
+                return;
+            }
+            console.log(`commithign value ${value}`)
+            this.cmdObj.pushCellDataCmd(value, existingValue, row, col);
+            if (value !== existingValue) {
+                this.cellDataObj.set(row, col, value);
             }
         }
+
     }
 
     stopAutoScroll() {
@@ -330,36 +370,19 @@ export default class Selectors {
         const colNumPerCanvas = cnvInst.colNumber;
 
         // If inputElem is active — save its current value to cellDataObj before moving
-        if (this.inputElem.style.display === 'block') {
-            const prevRow = this.activeInputRow;
-            const prevCol = this.activeInputCol;
-            const prevValue = this.inputElem.value;
 
-            if (prevRow !== undefined && prevCol !== undefined) {
-                const existingValue = this.cellDataObj.get(prevRow, prevCol);
-                if (prevValue !== existingValue) {
-                    this.cellDataObj.set(prevRow, prevCol, prevValue);
-                }
-            }
+        const prevRow = this.activeInputRow;
+        const prevCol = this.activeInputCol;
+        const prevValue = this.inputElem.value;
+
+        if (prevRow !== undefined && prevCol !== undefined) {
+            this.commitInputValue();
         }
+
 
         this.selectionObj.startRow = this.selectionObj.endRow = row;
         this.selectionObj.startCol = this.selectionObj.endCol = col;
-
-        // Clear previous selection area
-        if (
-            this.prevStartCanvaRow !== null &&
-            this.prevEndCanvaRow !== null &&
-            this.prevStartCanvaCol !== null &&
-            this.prevEndCanvaCol !== null
-        ) {
-            for (let r = this.prevStartCanvaRow; r <= this.prevEndCanvaRow; r++) {
-                for (let c = this.prevStartCanvaCol; c <= this.prevEndCanvaCol; c++) {
-                    const instance = this.canvaInstant.get(r, c);
-                    if (instance) instance.render();
-                }
-            }
-        }
+        this.renderAllDataCanva();
 
         // Update previous canvas range
         const canvasRow = Math.floor(row / rowNumPerCanvas);
@@ -368,30 +391,16 @@ export default class Selectors {
         this.prevStartCanvaRow = this.prevEndCanvaRow = canvasRow;
         this.prevStartCanvaCol = this.prevEndCanvaCol = canvasCol;
 
-        cnvInst.render();
+        // cnvInst.render();
 
-        // Position and show inputElem using findCell result
-        this.inputElem.style.left = `${posX}px`;
-        this.inputElem.style.top = `${posY}px`;
-        this.inputElem.style.width = `${cnvInst.masterWobj.getValue(col)}px`;
-        this.inputElem.style.height = `${cnvInst.masterHobj.getValue(row)}px`;
-
-        // why removing this text is not get save 
-        this.inputElem.style.display = 'block';
-
-        // Load value into input
-        this.inputElem.value = this.cellDataObj.get(row, col) || '';
-
-        // Track active input cell
         this.activeInputRow = row;
         this.activeInputCol = col;
 
-        this.inputElem.focus();
-        this.inputElem.select();
+        this.renderInputElm();
     }
 
     cellSelectionMouseMove(e) {
-        console.log("selection is continue")
+        // console.log("selection is continue")
         const canvaRow = Number(e.target.getAttribute('row'));
         const canvaCol = Number(e.target.getAttribute('column'));
         const cnvInst = this.canvaInstant.get(canvaRow, canvaCol);
@@ -404,30 +413,7 @@ export default class Selectors {
         this.selectionObj.endRow = cell.row;
         this.selectionObj.endCol = cell.col;
 
-        const rowNumPerCanvas = cnvInst.rowNumber;
-        const colNumPerCanvas = cnvInst.colNumber;
-
-        const currStartCanvaRow = Math.floor(Math.min(this.selectionObj.startRow, this.selectionObj.endRow) / rowNumPerCanvas);
-        const currEndCanvaRow = Math.floor(Math.max(this.selectionObj.startRow, this.selectionObj.endRow) / rowNumPerCanvas);
-        const currStartCanvaCol = Math.floor(Math.min(this.selectionObj.startCol, this.selectionObj.endCol) / colNumPerCanvas);
-        const currEndCanvaCol = Math.floor(Math.max(this.selectionObj.startCol, this.selectionObj.endCol) / colNumPerCanvas);
-
-        const minRow = Math.min(currStartCanvaRow, this.prevStartCanvaRow);
-        const maxRow = Math.max(currEndCanvaRow, this.prevEndCanvaRow);
-        const minCol = Math.min(currStartCanvaCol, this.prevStartCanvaCol);
-        const maxCol = Math.max(currEndCanvaCol, this.prevEndCanvaCol);
-
-        for (let r = minRow; r <= maxRow; r++) {
-            for (let c = minCol; c <= maxCol; c++) {
-                const instance = this.canvaInstant.get(r, c);
-                if (instance) instance.render();
-            }
-        }
-
-        this.prevStartCanvaRow = currStartCanvaRow;
-        this.prevEndCanvaRow = currEndCanvaRow;
-        this.prevStartCanvaCol = currStartCanvaCol;
-        this.prevEndCanvaCol = currEndCanvaCol;
+        this.renderAllDataCanva();
     }
 
     columnLabelSelection(e) {
@@ -583,7 +569,8 @@ export default class Selectors {
         this.renderAllDataCanva();
     }
 
-    createInputElement() {
+    initialize() {
+        this.BasicMathFuncs = new BasicMathFuncs( this.cellDataObj )
         this.inputElem = document.createElement('input');
         this.inputElem.type = 'text';
         this.inputElem.style.position = 'absolute';
@@ -606,13 +593,52 @@ export default class Selectors {
 
         this.inputElem.style.height = 0 + "px"
         this.inputElem.style.width = 0 + "px"
-
-        this.inputElem.addEventListener('keydown', (ev) => {
-            if (ev.key === 'Enter') {
+        let debounceTimer;
+        this.inputElem.addEventListener("input", (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
                 this.commitInputValue();
-                this.inputElem.style.display = 'none';
-            }
+            }.bind(this), 300); // wait 300ms after last keystroke
         });
+
+        const undoElm = document.getElementById('Undo')
+        const redoElm = document.getElementById('Redo')
+
+        undoElm.addEventListener('mousedown', function () {
+            this.cmdObj.undo();
+            this.renderAll();
+        }.bind(this))
+
+        redoElm.addEventListener('mousedown', function () {
+            this.cmdObj.redo();
+            this.renderAll();
+        }.bind(this));
+
+
+        const avgBtn = document.getElementById( 'average' );
+        const minBtn = document.getElementById( 'minimum' );
+        const maxBtn = document.getElementById( 'maximum' );
+        const sumBtn = document.getElementById( 'sum' );
+
+        avgBtn.addEventListener( 'click', function() {
+            this.BasicMathFuncs.avg(this.selectionObj);
+            this.renderAllDataCanva();
+        }.bind(this) )
+        minBtn.addEventListener( 'click', function() {
+            this.BasicMathFuncs.min(this.selectionObj);
+            this.renderAllDataCanva();
+        }.bind(this) )
+
+        maxBtn.addEventListener( 'click', function() {
+            this.BasicMathFuncs.max(this.selectionObj);
+            this.renderAllDataCanva();
+        }.bind(this) )
+
+        sumBtn.addEventListener( 'click', function() {
+            this.BasicMathFuncs.sum(this.selectionObj);
+            this.renderAllDataCanva();
+        }.bind(this) )
+
 
     }
 
@@ -644,5 +670,23 @@ export default class Selectors {
         this.inputElem.style.left = `${left}px`;
         this.inputElem.style.width = `${this.masterWobj.getValue(col)}px`;
         this.inputElem.style.height = `${this.masterHobj.getValue(row)}px`;
+    }
+
+    renderInputElm() {
+        let RowInst = this.rowLableInstant.get(Math.floor(this.activeInputRow / this.rowNumberPerCanva));
+        let ColInst = this.colLableInstant.get(Math.floor(this.activeInputCol / this.colNumberPerCanva));
+        if (!RowInst || !ColInst) {
+            return;
+        }
+        let y = RowInst.getRowPosition(this.activeInputRow)
+        let x = ColInst.getColPosition(this.activeInputCol)
+        this.inputElem.style.top = y + "px";
+        this.inputElem.style.left = x + "px";
+
+        this.inputElem.style.height = this.masterHobj.getValue(this.activeInputRow) + "px";
+        this.inputElem.style.width = this.masterWobj.getValue(this.activeInputCol) + "px";
+
+        this.inputElem.value = this.cellDataObj.get(this.activeInputRow, this.activeInputCol)
+
     }
 }

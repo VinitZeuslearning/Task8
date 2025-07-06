@@ -77,7 +77,7 @@ export default class Canva {
     render() {
         // Reset transform
         // this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        console.log(`render is happen for x: ${this.canvaRowIndex} y : ${this.canvaColIndex}`)
+        // console.log(`render is happen for x: ${this.canvaRowIndex} y : ${this.canvaColIndex}`)
         // Clear canvas
         this.ctx.clearRect(0, 0, this._canva.width, this._canva.height);
 
@@ -172,6 +172,7 @@ export default class Canva {
             cellTopY += cellH;
         }
 
+        // this.repositioning();
 
 
 
@@ -181,22 +182,17 @@ export default class Canva {
 
         // Draw selection rectangle if active
         // Draw selection rectangle if active
-        if (true) {
-            const { startRow, startCol, endRow, endCol } = this.selectionObj;
+        const { startRow, startCol, endRow, endCol } = this.selectionObj;
 
-            const visStartRow = this.rowIndexStartFrm;
-            const visEndRow = visStartRow + this.rowNumber - 1;
-            const visStartCol = this.colIndexStartFrm;
-            const visEndCol = visStartCol + this.colNumber - 1;
+        const visStartRow = this.rowIndexStartFrm;
+        const visEndRow = visStartRow + this.rowNumber - 1;
+        const visStartCol = this.colIndexStartFrm;
+        const visEndCol = visStartCol + this.colNumber - 1;
+        const condition =  Math.max(startRow, endRow) < visStartRow || Math.min(startRow, endRow) > visEndRow ||
+        Math.max(startCol, endCol) < visStartCol || Math.min(startCol, endCol) > visEndCol;
+        // If no overlap with this canvas, skip
 
-            // If no overlap with this canvas, skip
-            if (
-                Math.max(startRow, endRow) < visStartRow || Math.min(startRow, endRow) > visEndRow ||
-                Math.max(startCol, endCol) < visStartCol || Math.min(startCol, endCol) > visEndCol
-            ) {
-                return;
-            }
-
+        if (!condition) {
             // Normalize selection boundaries
             const selStartRow = Math.min(startRow, endRow);
             const selEndRow = Math.max(startRow, endRow);
@@ -266,9 +262,12 @@ export default class Canva {
             this.ctx.stroke();
         }
 
+        this.repositioning()
+    }
 
-
-
+    repositioning() {
+        this._canva.style.left = this.masterWobj.cnvdM.getPrefVal( this.canvaColIndex ) + "px"
+        this._canva.style.top = this.masterHobj.cnvdM.getPrefVal( this.canvaRowIndex ) + "px"
     }
 
     getCellAtPosition(x, y) {

@@ -72,6 +72,7 @@ export default class ColLabelCanva {
         // ✅ No final right border line — intentionally left open
 
         // this.ctx.restore();
+
         this._canva.style.top = this.parentRef.scrollTop + "px";
         this._canva.style.left = this.colMobj.cnvdM.getPrefVal(this.canvaColNumber) + "px";
 
@@ -200,19 +201,6 @@ isOnLine(xpos, ypos) {
     let x = xpos - this.rect.left;
     let y = ypos - this.rect.top
     let threshold = 2;
-    // if (y >= 0 && y < this.height) {
-    //     let tmp = this.colMobj.getValue(this.colStartFrm);
-    //     let col = this.colStartFrm + 1;
-    //     for (let i = 1; i <= this.colNumber; i++) {
-    //         if (Math.abs(x - tmp) <= threshold) {
-    //             return col;
-    //         }
-    //         tmp += this.colMobj.getValue(col);
-    //         col++;
-    //     }
-    // }
-    // return -1;
-
     let posX = 0;
     for ( let i = this.colStartFrm; i <= this.colStartFrm + this.colNumber; i++ ) {
         if ( Math.abs( posX - x ) <= threshold ) {
@@ -235,6 +223,18 @@ findCol(x) {
 
     return -1;
 }
+getColPosition(colNumber) {
+    if (colNumber < this.colStartFrm || colNumber > this.colStartFrm + this.colNumber) {
+        return -1; // out of visible canvas range
+    }
+
+    let posX = this.colMobj.cnvdM.getPrefVal( this.canvaColNumber );
+    for (let i = this.colStartFrm; i < colNumber; i++) {
+        posX += this.colMobj.getValue(i);
+    }
+    return posX;
+}
+
 
 initialize(colNumber, height, width, colCountStartNumber = 0) {
     this.colNumber = colNumber;

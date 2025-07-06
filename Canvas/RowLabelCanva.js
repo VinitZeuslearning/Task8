@@ -29,7 +29,7 @@ export default class RowLabelCanva {
 
     render() {
         // Get current canvas height from row manager
-        console.log( `redering rowlabel canva ${this.canvaRowNumber}` )
+        console.log(`redering rowlabel canva ${this.canvaRowNumber}`)
         this.height = this.rowMobj.cnvdM.getValue(this.canvaRowNumber);
 
         // Update canvas DOM size
@@ -175,6 +175,17 @@ export default class RowLabelCanva {
             }
         }
         return -1;
+    }
+    getRowPosition(rowNumber) {
+        if (rowNumber < this.rowStartFrm || rowNumber > this.rowStartFrm + this.rowNumber) {
+            return -1; // out of visible canvas range
+        }
+
+        let posY = this.rowMobj.cnvdM.getPrefVal( this.canvaRowNumber );
+        for (let i = this.rowStartFrm; i < rowNumber; i++) {
+            posY += this.rowMobj.getValue(i);
+        }
+        return posY;
     }
     initialize(rowNumber, height, width, rowCountStart) {
         let tmp = 0;

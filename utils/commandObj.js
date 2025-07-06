@@ -30,12 +30,12 @@
             undo : function () {
                 let r = row;
                 let ov = oldValue;
-                this.masterHm.set( r, ov );
+                this.masterHm.update( r, ov );
             }.bind(this),
             redo : function () {
                 let r = row;
                 let nv = newValue;
-                this.masterHm.set( r, nv );
+                this.masterHm.update( r, nv );
             }.bind(this)
         }
         Obj.undo.bind( this );
@@ -48,12 +48,13 @@
             undo : function () {
                 let c = col;
                 let ov = oldValue;
-                this.masterWm.set( c, ov );
+                console.log(`undoing colLabel ${col} to value ${oldValue}`)
+                this.masterWm.update( c, ov );
             }.bind(this),
             redo : function () {
                 let c = col;
                 let nv = newValue;
-                this.masterWm.set( c, nv );
+                this.masterWm.update( c, nv );
             }.bind(this)
         }
         Obj.undo.bind( this );
@@ -62,6 +63,9 @@
     }
 
     undo( ) {
+        if ( this.stackUndo.length == 0 ) {
+            return;
+        }
         let tmp = this.stackUndo[ this.stackUndo.length - 1 ];
         tmp.undo();
         this.stackUndo.pop();
@@ -69,6 +73,9 @@
     }
 
     redo () {
+        if ( this.stackRedo.length == 0 ) {
+            return;
+        }
         let tmp = this.stackRedo[ this.stackRedo.length - 1 ];
         tmp.redo();
         this.stackRedo.pop();
