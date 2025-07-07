@@ -1,3 +1,8 @@
+
+/**
+ * double map data strucutre 
+ */
+
 export default class TwoLevelMap {
     constructor() {
         this.outerMap = new Map();  // id1 → Map(id2 → value)

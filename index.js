@@ -1,29 +1,16 @@
-// import RCManager from "./rcManager";
 import TwoLevelMap from "./DataStructure/twolevelmap.js";
 import RCManager from "./DataStructure/RmCnvManager.js";
 import RowLabelCanva from "./Canvas/RowLabelCanva.js";
 import ColLabelCanva from "./Canvas/ColLabelCanva.js";
 import CellData from "./DataStructure/CellData.js";
 import Canva from "./Canvas/DataCanvas.js";
-import InputTxt from "./Canvas/inputElm.js";
 import Selectors from "./utils/eventHandlers.js";
 import CommandObj from "./utils/commandObj.js";
-/*
-what to do next 
-
-1) add one render method in the canvamanger which just render the all canva without creating new instance 
-2) pass the proepr parameter to the label class and also pass the handler which will be called when the resizing hapening 
-3) also need to add the way to maintain the canva instance in canvamanager for canva which are visible . Just maintain the array of size of exactly same as the this.lowerbound - this.upperbound for row , col , rowLable and colLabel
 
 
-*/
-
-
-
-
-// class to manager the Canvas class
-
-
+/**
+ * @param
+ */
 
 class CanvasManager {
 
@@ -90,15 +77,7 @@ class CanvasManager {
 
         this._isInstantRenderRequire = true;
 
-        // this.inputStateM = new InputTxt( );
-        // this.inputStateM.masterHobj = this.rowM;
-        // this.inputStateM.masterWobj = this.colM;
-        // this.inputStateM.colsPerCanva = this.colsPerCanva;
-        // this.inputStateM.rowsPerCanva = this.rowsPerCanva;
-        //     this.inputStateM.cellDataObj = this.cellDataObj;
-
         this.cellDataObj = new CellData()
-
 
         this.Selectors = new Selectors(this.viewPort, this.cnvInst);
         this.Selectors.masterHobj = this.rowM;
@@ -116,17 +95,20 @@ class CanvasManager {
         this.Selectors.renderAllRowLable = this.renderAllRowLable.bind( this );
         this.Selectors.renderAllColLable = this.renderAllColLable.bind( this );
 
+        // commandObj instance which handle the undo and redo
         this.cmdObj = new CommandObj(this.cellDataObj, this.rowM, this.colM);
         this.Selectors.cmdObj = this.cmdObj;
         this.Selectors.initialize();
-        // this.Selectors.initialize();
-        
     }
 
     resizingHandler(obj) {
         let tmp;
         let i;
         let j;
+        if ( obj.extra > 2 ) {
+            console.log("")
+        }
+        
         if (obj.canvaRow != undefined) {
 
             // tmp = this.rowM.cnvdM.getValue(obj.row)

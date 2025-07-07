@@ -1,5 +1,17 @@
 import adjustCanvasDPI from "../utils/adjustDpi.js";
+/**
+ * Represents a canvas block responsible for rendering a section of a virtualized grid.
+ * 
+ * Each `Canva` instance corresponds to one visible portion (or tile) of the overall grid,
+ * handling its own rendering, DPI scaling, and selection highlighting.
+ */
 export default class Canva {
+    /**
+   * Creates a new Canva instance.
+   * Initializes internal properties and canvas element.
+   *
+   * @constructor
+   */
     constructor() {
         this._dataStg = null;
         this.celldt = null;
@@ -34,46 +46,31 @@ export default class Canva {
     }
 
 
-
+    /**
+     * Adjusts the canvas's internal resolution based on the device pixel ratio (DPR)
+     * for sharp rendering on high-DPI displays.
+     */
     adjustCanvasDPI() {
-        const dpr = window.devicePixelRatio;
-        const cssWidth = this._canva.clientWidth;
-        const cssHeight = this._canva.clientHeight;
+        adjustCanvasDPI(this._canva, this.ctx)
+        // const dpr = window.devicePixelRatio || 1;
+        // const cssWidth = this._canva.clientWidth;
+        // const cssHeight = this._canva.clientHeight;
 
-        // Set the internal pixel size of the canvas
-        this._canva.width = Math.floor(cssWidth * dpr);
-        this._canva.height = Math.floor(cssHeight * dpr);
+        // // Set the internal pixel size of the canvas
+        // this._canva.width = Math.round(cssWidth * dpr);
+        // this._canva.height = Math.round(cssHeight * dpr);
 
-        // Set the CSS size so it stays visually the same size on screen
-        this._canva.style.width = `${cssWidth}px`;
-        this._canva.style.height = `${cssHeight}px`;
+        // // Set the CSS size so it stays visually the same size on screen
+        // this._canva.style.width = `${cssWidth}px`;
+        // this._canva.style.height = `${cssHeight}px`;
 
-        // this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.ctx.scale(dpr, dpr);
+        // // this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        // this.ctx.scale(dpr, dpr);
     }
 
-    static performBinarySearch(arr, num) {
-        if (num > arr[arr.length - 1] || num < arr[0]) {
-            return -1;
-        }
-        let i = 0;
-        let j = arr.length - 1;
-
-
-        let mid;
-        while (i < j) {
-            mid = Math.ceil(i + ((j - i) / 2));
-
-            if (arr[mid] > num) {
-                j = mid - 1;
-            }
-            else {
-                i = mid;
-            }
-        }
-        return i;
-    }
-
+    /**
+     * Renders the canvas: grid lines, cell text, and selection highlights.
+     */
     render() {
         // Reset transform
         // this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -188,8 +185,8 @@ export default class Canva {
         const visEndRow = visStartRow + this.rowNumber - 1;
         const visStartCol = this.colIndexStartFrm;
         const visEndCol = visStartCol + this.colNumber - 1;
-        const condition =  Math.max(startRow, endRow) < visStartRow || Math.min(startRow, endRow) > visEndRow ||
-        Math.max(startCol, endCol) < visStartCol || Math.min(startCol, endCol) > visEndCol;
+        const condition = Math.max(startRow, endRow) < visStartRow || Math.min(startRow, endRow) > visEndRow ||
+            Math.max(startCol, endCol) < visStartCol || Math.min(startCol, endCol) > visEndCol;
         // If no overlap with this canvas, skip
 
         if (!condition) {
@@ -265,11 +262,22 @@ export default class Canva {
         this.repositioning()
     }
 
+    /**
+    * Repositions the canvas DOM element inside the container
+    * based on its row and column index positions.
+    */
     repositioning() {
-        this._canva.style.left = this.masterWobj.cnvdM.getPrefVal( this.canvaColIndex ) + "px"
-        this._canva.style.top = this.masterHobj.cnvdM.getPrefVal( this.canvaRowIndex ) + "px"
+        this._canva.style.left = this.masterWobj.cnvdM.getPrefVal(this.canvaColIndex) + "px"
+        this._canva.style.top = this.masterHobj.cnvdM.getPrefVal(this.canvaRowIndex) + "px"
     }
 
+    /**
+   * Returns the grid cell indices (row and col) at the given screen-space position (x, y).
+   *
+   * @param {number} x - The X coordinate (relative to container).
+   * @param {number} y - The Y coordinate (relative to container).
+   * @returns {{row: number, col: number} | null} The cell indices or null if out of bounds.
+   */
     getCellAtPosition(x, y) {
         // Calculate canvas offset within the parent container
         const canvasOffsetY = this.masterHobj.cnvdM.getPrefVal(this.canvaRowIndex);
@@ -316,6 +324,14 @@ export default class Canva {
         return { row: rowIdx, col: colIdx };
     }
 
+    /**
+   * Finds the position and grid indices of the cell at a given screen-space position.
+   *
+   * @param {number} x - The X coordinate relative to the viewport.
+   * @param {number} y - The Y coordinate relative to the viewport.
+   * @returns {{posX: number, posY: number, row: number, col: number} | null} 
+   *  The position and indices of the cell or null if outside the canvas.
+   */
     findCell(x, y) {
         const container = document.getElementById("canvaManager");
         const rect = container.getBoundingClientRect();
@@ -379,21 +395,16 @@ export default class Canva {
         };
     }
 
-
-
-    setInputPos(obj) {
-        if (!obj) return; // defensive check if click outside grid region
-        this.inpElm.style.top = obj.top + "px";
-        this.inpElm.style.left = obj.left - 2 + "px";
-        this.inpElm.style.height = this.masterHobj.getValue(obj.row) + "px";
-        this.inpElm.style.width = this.masterWobj.getValue(obj.col) + "px";
-    }
-
-    changeVal(r, c, val) {
-        // Value-changing logic here
-    }
-
-    _initialize(cellHeight = 20, cellWidth = 100, rowNumber = 0, colNumber = 0) {
+    /**
+     * Initializes the canvas instance with cell sizes, number of rows/columns, 
+     * and attaches click event listeners.
+     *
+     * @param {number} [cellHeight=20] - Default cell height.
+     * @param {number} [cellWidth=100] - Default cell width.
+     * @param {number} [rowNumber=0] - Number of rows in this canvas section.
+     * @param {number} [colNumber=0] - Number of columns in this canvas section.
+     */
+    _initialize(cellHeight, cellWidth , rowNumber , colNumber) {
 
         this._canva.setAttribute('row', this.canvaRowIndex)
         this._canva.setAttribute('column', this.canvaColIndex)

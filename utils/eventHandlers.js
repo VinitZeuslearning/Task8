@@ -1,5 +1,11 @@
 import BasicMathFuncs from "./basicMathFuncs.js";
 
+/**
+ * Class which handle the event listners, seletions, resizing and manage the state of the input dom Element  
+ * 
+ * @param {object} parentContainer - container in which canvas are present
+ * @param {object} canvaInstant - dataStrucuter which store the instance of the canva obj
+ */
 export default class Selectors {
     constructor(parentContainer, canvaInstant) {
         this.parent = parentContainer;
@@ -57,7 +63,7 @@ export default class Selectors {
 
         this.cmdObj = null;
     }
-
+    
     attachListeners() {
         this.parent.addEventListener("mousedown", this.handleMouseDown.bind(this));
         window.addEventListener("mousemove", this.handleMouseMove.bind(this));

@@ -1,3 +1,15 @@
+import RCManager from "../DataStructure/RmCnvManager.js";
+import CellData from "../DataStructure/CellData.js";
+
+/**
+ * Class which manage the actions for undo and redo operations
+ * 
+ * 
+ * @param { CellData }  cellDataObj - data strucutre which store the value of the cells
+ * @param { RCManager } masterHm - data structure which manage the height of the cells
+ * @param { RCManager } masterWm - data structure which manage the width of the cells
+ */
+ 
  export default class CommandObj {
     constructor( cellDataObj, masterHm, masterWm ) {
         this.cellDataObj = cellDataObj;

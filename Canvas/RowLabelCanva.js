@@ -1,6 +1,18 @@
 import adjustCanvasDPI from "../utils/adjustDpi.js";
 
+/**
+ * Represents a canvas responsible for rendering row labels alongside a grid.
+ * 
+ * Each instance handles a virtualized section of the vertical label area,
+ * drawing row numbers, selection highlights, and resize detection.
+ */
 export default class RowLabelCanva {
+    /**
+   * Creates a new RowLabelCanva instance.
+   * Initializes properties, canvas element, and internal state.
+   *
+   * @constructor
+   */
     constructor() {
         this.rowCountStart = 0;
         this.height = 0;
@@ -27,6 +39,9 @@ export default class RowLabelCanva {
         // have to set the rowIndex, androwMobj 
     }
 
+    /**
+     * Renders the row labels, grid lines, and selection highlights within this canvas.
+     */
     render() {
         // Get current canvas height from row manager
         console.log(`redering rowlabel canva ${this.canvaRowNumber}`)
@@ -146,6 +161,13 @@ export default class RowLabelCanva {
         this.ctx.stroke();
 
     }
+
+    /**
+     * Finds and returns the grid row index at a given vertical (y) position.
+     *
+     * @param {number} y - Y coordinate relative to viewport.
+     * @returns {number} Row index in the grid, or -1 if outside.
+     */
     findRow(y) {
 
         let posY = this.rowMobj.cnvdM.getPrefVal(this.canvaRowNumber);
@@ -158,6 +180,14 @@ export default class RowLabelCanva {
 
         return -1;
     }
+
+    /**
+   * Checks if a given (x, y) position is near a row boundary line (for resizing).
+   *
+   * @param {number} xpos - X coordinate relative to viewport.
+   * @param {number} ypos - Y coordinate relative to viewport.
+   * @returns {number} Row index near line, or -1 if none.
+   */
     isOnLine(xpos, ypos) {
         this.rect = this._canva.getBoundingClientRect();
         let x = xpos - this.rect.left;
@@ -176,17 +206,34 @@ export default class RowLabelCanva {
         }
         return -1;
     }
+
+    /**
+    * Gets the vertical pixel position (relative to parent container) of a given row.
+    *
+    * @param {number} rowNumber - Row index.
+    * @returns {number} Pixel Y position, or -1 if out of canvas range.
+    */
     getRowPosition(rowNumber) {
         if (rowNumber < this.rowStartFrm || rowNumber > this.rowStartFrm + this.rowNumber) {
             return -1; // out of visible canvas range
         }
 
-        let posY = this.rowMobj.cnvdM.getPrefVal( this.canvaRowNumber );
+        let posY = this.rowMobj.cnvdM.getPrefVal(this.canvaRowNumber);
         for (let i = this.rowStartFrm; i < rowNumber; i++) {
             posY += this.rowMobj.getValue(i);
         }
         return posY;
     }
+
+    /**
+    * Initializes the canvas with size, row number, and starting row label number.
+    * Also recalculates starting row index and triggers an initial render.
+    *
+    * @param {number} rowNumber - Number of rows in this canvas section.
+    * @param {number} height - Canvas height in pixels.
+    * @param {number} width - Canvas width in pixels.
+    * @param {number} rowCountStart - Starting number for row labels.
+    */
     initialize(rowNumber, height, width, rowCountStart) {
         let tmp = 0;
         // for ( let i = this.rowIndex; i < this.rowIndex + this.rowNumber; i++ ) {
@@ -200,31 +247,5 @@ export default class RowLabelCanva {
         this.rowStartFrm = this.rowNumber * this.canvaRowNumber;
         this.render();
         this.rect = this._canva.getBoundingClientRect();
-        // this._canva.addEventListener('mousedown', (e) => {
-        //     if ((this.moseOnIndx != -1) && this.state.resizePointer) {
-        //         this.mouseDownDistanceHandler(e);
-        //     }
-        // });
-
-        // this._canva.addEventListener('mousemove', (e) => {
-        //     if (this.state.resizing) {
-        //         return;
-        //     }
-
-        //     // console.log(this.rect.top)
-        //     let tmp = this.isOnLine(x, y);
-        //     console.log(y);
-        //     if (tmp != -1) {
-        //         this.state.resizePointer = true;
-        //         this._canva.style.cursor = 'row-resize';
-        //         this.moseOnIndx = tmp;
-        //         console.log("on row line " + this.moseOnIndx)
-        //     } else {
-        //         this._canva.style.cursor = 'pointer'
-        //         this.moseOnIndx = -1;
-        //     }
-        // })
-
-
     }
 }
