@@ -238,7 +238,14 @@ export default class Selectors {
         }
 
         else if (ctx.mode === 'cellSelect' && type === 'cell') {
+            // const prect = this.parent.getBoundingClientRect()
+            // let x = Math.max( e.clientX, this.masterWobj.offSet );
+            // x = Math.min ( x, prect.right - 300  );
+            
+            // let y = Math.max( e.clientY,  this.masterHobj.offSet );
+            // y = Math.min( y, prect.bottom );
             const elm = document.elementFromPoint(e.clientX, e.clientY);
+            // const elm = document.elementFromPoint( x , y );
             this.cellSelectionMouseMove({ target: elm, clientX: e.clientX, clientY: e.clientY });
         }
         else {

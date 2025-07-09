@@ -513,11 +513,11 @@ class CanvasManager {
             console.log();
         }
         if (dx > 0) {
-            this.updateRowLabelPos();
+            requestAnimationFrame(this.updateRowLabelPos.bind(this));
         }
 
         if (dy > 0) {
-            this.updateColLabelPos();
+            requestAnimationFrame(this.updateColLabelPos.bind(this));
         }
 
 
@@ -530,24 +530,24 @@ class CanvasManager {
         }
         if (dx > 0) {
             if (dx <= this.horDxForSmthScroll && !this._isInstantRenderRequire) {
-                this.smoothScrollRender(0);
+                requestAnimationFrame( this.smoothScrollRender.bind( this, 0) );
             }
         }
 
         if (dy > 0) {
             if (dy <= this.horDxForSmthScroll && !this._isInstantRenderRequire) {
-                this.smoothScrollRender(1);
+                requestAnimationFrame(  this.smoothScrollRender.bind(this, 1) )  
             }
         }
 
 
         const canvaMagnagerElmRect = this.canvaMagnagerElm.getBoundingClientRect();
         if (  500 >= canvaMagnagerElmRect.height - this.scrollTop  ) {
-            this.canvaMagnagerElm.style.height =  Math.min( this.scrollTop + 2000 + "px", this.height );
+            this.canvaMagnagerElm.style.height =  Math.min( this.scrollTop + 2000 , this.height ) + "px";
         }
 
         if (  500 >= canvaMagnagerElmRect.width -  this.scrollLeft  ) {
-            this.canvaMagnagerElm.style.width = Math.min( this.scrollLeft + 2000 + "px", this.width );
+            this.canvaMagnagerElm.style.width = Math.min( this.scrollLeft + 2000, this.width ) + "px";
         }
 
 

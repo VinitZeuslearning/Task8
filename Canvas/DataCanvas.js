@@ -155,8 +155,8 @@ export default class Canva {
                 let cellW = this.masterWobj.getValue(this.colIndexStartFrm + c);
 
                 let tmp = this.cellDataObj.get(this.rowIndexStartFrm + r, this.colIndexStartFrm + c);
-                let maxChars = Math.floor(cellW / charWidth) - 2;
-                tmp = tmp.slice(0, Math.max(0, maxChars));
+                // let maxChars = Math.floor(cellW / charWidth);
+                tmp = tmp.slice(0, Math.max(0, 14));
 
                 let textX = cellX + cellW / 2;
                 let textY = cellTopY + cellH / 2;

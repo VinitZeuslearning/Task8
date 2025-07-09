@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas Bunny Outline</title>
+  <style>
+    body {
+      background: #f2dfc6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    canvas {
+      background: #f2dfc6;
+      border-radius: 12px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bunnyCanvas" width="500" height="500"></canvas>
+
+<script>
+  const canvas = document.getElementById('bunnyCanvas');
+  const ctx = canvas.getContext('2d');
+
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#aa5522';
+
+  ctx.beginPath();
+
+  // Right ear
+  ctx.moveTo(250, 100);
+  ctx.lineTo(300, 50);
+  ctx.lineTo(350, 70);
+  ctx.lineTo(250, 100);
+
+  // Left ear
+  ctx.moveTo(250, 100);
+  ctx.lineTo(200, 50);
+  ctx.lineTo(150, 70);
+  ctx.lineTo(250, 100);
+
+  // Head (hexagon-like)
+  ctx.moveTo(200, 100);
+  ctx.lineTo(180, 150);
+  ctx.lineTo(200, 200);
+  ctx.lineTo(300, 200);
+  ctx.lineTo(320, 150);
+  ctx.lineTo(300, 100);
+  ctx.lineTo(200, 100);
+
+  // Middle body part
+  ctx.moveTo(180, 200);
+  ctx.lineTo(160, 250);
+  ctx.lineTo(200, 250);
+  ctx.lineTo(220, 220);
+  ctx.lineTo(280, 220);
+  ctx.lineTo(300, 250);
+  ctx.lineTo(340, 250);
+  ctx.lineTo(320, 200);
+  ctx.lineTo(180, 200);
+
+  // Lower body part
+  ctx.moveTo(160, 250);
+  ctx.lineTo(140, 300);
+  ctx.lineTo(200, 300);
+  ctx.lineTo(220, 270);
+  ctx.lineTo(280, 270);
+  ctx.lineTo(300, 300);
+  ctx.lineTo(360, 300);
+  ctx.lineTo(340, 250);
+  ctx.lineTo(160, 250);
+
+  // Base rectangle
+  ctx.moveTo(140, 300);
+  ctx.lineTo(120, 350);
+  ctx.lineTo(380, 350);
+  ctx.lineTo(360, 300);
+  ctx.lineTo(140, 300);
+
+  ctx.stroke();
+</script>
+
+</body>
+</html>

@@ -25,4 +25,4 @@ function generateDummyUserData(count, filePath) {
 }
 
 // Example: Generate 10 users and write to data.json
-generateDummyUserData(100, 'data.json');
+generateDummyUserData(50, 'data.json');
