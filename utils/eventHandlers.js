@@ -1,4 +1,5 @@
 import BasicMathFuncs from "./basicMathFuncs.js";
+import { CellSelectionHandler } from "../handlers/cellSelectionHandler.js";
 
 /**
  * Class which handle the event listners, seletions, resizing and manage the state of the input dom Element  
@@ -62,8 +63,16 @@ export default class Selectors {
         this.scrollEndHandler = null;
 
         this.cmdObj = null;
+        this.inputDataObj = { activeInputRow: null, activeInputCol: null };
+
+
+        this.mouseDownHandlers = new Map();
+        this.mouseUpHandlers = new Map();
+        this.mouseMoveHandlers = new Map();
+
+        this.currentHandler = null;
     }
-    
+
     attachListeners() {
         this.parent.addEventListener("mousedown", this.handleMouseDown.bind(this));
         window.addEventListener("mousemove", this.handleMouseMove.bind(this));
@@ -89,18 +98,20 @@ export default class Selectors {
     }
 
     handleMouseDown(e) {
+
+        // Todo have to do this for all selections features
+
+        for (const elm of this.selectionInstanceArr) {
+            if (elm.hitTest(e)) {
+                this.currentHandler = elm;
+                elm.mouseDownHandler(e);
+            }
+        }
+
+
         this.mouseDown = true;
         this.BasicMathFuncs.clearTempResults();
         const type = e.target.getAttribute('type');
-        if (type === 'cell') {
-            this.clearColLabelSelection();
-            this.clearRowLabelSelection();
-            this.clearCellSelection();
-            this.isSelecting = true;
-            this.interactionContext.mode = 'cellSelect';
-            this.cellSelection(e);
-            return;
-        }
         if (type === 'ColLabel') {
             const colNum = Number(e.target.getAttribute('column'));
             const colLabel = this.colLableInstant.get(colNum);
@@ -156,6 +167,13 @@ export default class Selectors {
     }
 
     handleMouseMove(e) {
+
+        // Todo have to do this for all selections features
+        if (this.currentHandler != null) {
+            this.currentHandler.mouseMoveHandler(e);
+        }
+
+
         this.lastMouseX = e.clientX;
         this.lastMouseY = e.clientY;
         const elm = document.elementFromPoint(e.clientX, e.clientY);
@@ -236,18 +254,6 @@ export default class Selectors {
                 }
             }
         }
-
-        else if (ctx.mode === 'cellSelect' && type === 'cell') {
-            // const prect = this.parent.getBoundingClientRect()
-            // let x = Math.max( e.clientX, this.masterWobj.offSet );
-            // x = Math.min ( x, prect.right - 300  );
-            
-            // let y = Math.max( e.clientY,  this.masterHobj.offSet );
-            // y = Math.min( y, prect.bottom );
-            const elm = document.elementFromPoint(e.clientX, e.clientY);
-            // const elm = document.elementFromPoint( x , y );
-            this.cellSelectionMouseMove({ target: elm, clientX: e.clientX, clientY: e.clientY });
-        }
         else {
             document.body.style.cursor = 'default'
         }
@@ -288,7 +294,17 @@ export default class Selectors {
         this.scrollEndHandler()
     }
 
-    handleMouseUp() {
+    handleMouseUp(e) {
+
+        // Todo have to do this for all selections features
+        if ( this.currentHandler != null ) {
+            this.currentHandler.mouseUpHandler(e);
+            this.currentHandler = null;
+        }
+
+
+
+
         this.isSelecting = false;
         console.log(`under the mosueUP ${JSON.stringify(this.cmdObjState)}`)
         this.mouseDown = false;
@@ -349,7 +365,7 @@ export default class Selectors {
         if (row !== undefined && col !== undefined) {
             const value = this.inputElem.value;
             const existingValue = this.cellDataObj.get(row, col);
-            if ( value == existingValue ) {
+            if (value == existingValue) {
                 return;
             }
             console.log(`commithign value ${value}`)
@@ -583,7 +599,7 @@ export default class Selectors {
     }
 
     initialize() {
-        this.BasicMathFuncs = new BasicMathFuncs( this.cellDataObj )
+        this.BasicMathFuncs = new BasicMathFuncs(this.cellDataObj)
         this.inputElem = document.createElement('input');
         this.inputElem.type = 'text';
         this.inputElem.style.position = 'absolute';
@@ -628,29 +644,36 @@ export default class Selectors {
         }.bind(this));
 
 
-        const avgBtn = document.getElementById( 'average' );
-        const minBtn = document.getElementById( 'minimum' );
-        const maxBtn = document.getElementById( 'maximum' );
-        const sumBtn = document.getElementById( 'sum' );
+        const avgBtn = document.getElementById('average');
+        const minBtn = document.getElementById('minimum');
+        const maxBtn = document.getElementById('maximum');
+        const sumBtn = document.getElementById('sum');
 
-        avgBtn.addEventListener( 'click', function() {
+        avgBtn.addEventListener('click', function () {
             this.BasicMathFuncs.avg(this.selectionObj);
             this.renderAllDataCanva();
-        }.bind(this) )
-        minBtn.addEventListener( 'click', function() {
+        }.bind(this))
+        minBtn.addEventListener('click', function () {
             this.BasicMathFuncs.min(this.selectionObj);
             this.renderAllDataCanva();
-        }.bind(this) )
+        }.bind(this))
 
-        maxBtn.addEventListener( 'click', function() {
+        maxBtn.addEventListener('click', function () {
             this.BasicMathFuncs.max(this.selectionObj);
             this.renderAllDataCanva();
-        }.bind(this) )
+        }.bind(this))
 
-        sumBtn.addEventListener( 'click', function() {
+        sumBtn.addEventListener('click', function () {
             this.BasicMathFuncs.sum(this.selectionObj);
             this.renderAllDataCanva();
-        }.bind(this) )
+        }.bind(this))
+
+
+        // Todo have to do this for all selections features
+
+        this.selectionInstanceArr = [
+            new CellSelectionHandler(this.renderAllDataCanva, this.selectionObj, this.renderInputElm.bind(this), this.canvaInstant, this.parent, this.inputDataObj, this.colLabelSelectionObj, this.rowLabelSelectionObj, this.renderAll),
+        ];
 
 
     }
@@ -659,6 +682,7 @@ export default class Selectors {
         // If no active input, skip
         if (this.activeInputRow === undefined || this.activeInputCol === undefined) return;
 
+        this.commitInputValue();
         const row = this.activeInputRow;
         const col = this.activeInputCol;
 
