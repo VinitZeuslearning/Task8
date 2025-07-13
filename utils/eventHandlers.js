@@ -1,5 +1,9 @@
 import BasicMathFuncs from "./basicMathFuncs.js";
 import { CellSelectionHandler } from "../handlers/cellSelectionHandler.js";
+import { ColResizing } from "../handlers/ColresizingHandler.js";
+import { RowResizing } from "../handlers/RowResizingHandler.js";
+import { RowSelectionHandler } from "../handlers/rowSelectionHandler.js";
+import { ColSelectionHandler } from "../handlers/colSelectionHandler.js";
 
 /**
  * Class which handle the event listners, seletions, resizing and manage the state of the input dom Element  
@@ -105,9 +109,9 @@ export default class Selectors {
             if (elm.hitTest(e)) {
                 this.currentHandler = elm;
                 elm.mouseDownHandler(e);
+                break;
             }
         }
-
 
         this.mouseDown = true;
         this.BasicMathFuncs.clearTempResults();
@@ -118,24 +122,24 @@ export default class Selectors {
             const onLine = colLabel.isOnLine(e.clientX, e.clientY);
             if (onLine !== -1) {
                 if (this.interactionContext.mouseOverState == 'colInsert') {
-                    this.cellDataObj.shiftColKeys(onLine);
-                    this.renderAllDataCanva();
+                    // this.cellDataObj.shiftColKeys(onLine);
+                    // this.renderAllDataCanva();
                 }
                 else if (this.interactionContext.mouseOverState == 'colResize') {
-                    this.cmdObjState.type = 'colResize';
-                    this.cmdObjState.oldValue = this.masterWobj.getValue(onLine - 1);
-                    this.cmdObjState.col = onLine - 1;
-                    this.interactionContext.mode = 'resize-col';
-                    this.interactionContext.startX = e.clientX;
-                    this.interactionContext.colLabel = colLabel;
-                    this.interactionContext.colNumber = onLine - 1;
+                    // this.cmdObjState.type = 'colResize';
+                    // this.cmdObjState.oldValue = this.masterWobj.getValue(onLine - 1);
+                    // this.cmdObjState.col = onLine - 1;
+                    // this.interactionContext.mode = 'resize-col';
+                    // this.interactionContext.startX = e.clientX;
+                    // this.interactionContext.colLabel = colLabel;
+                    // this.interactionContext.colNumber = onLine - 1;
                 }
             }
             else {
-                this.interactionContext.mode = 'colSelect';
-                this.clearCellSelection();
-                this.clearRowLabelSelection();
-                this.columnLabelSelection(e)
+                // this.interactionContext.mode = 'colSelect';
+                // this.clearCellSelection();
+                // this.clearRowLabelSelection();
+                // this.columnLabelSelection(e)
             }
         }
         if (type === 'RowLabel') {
@@ -144,24 +148,24 @@ export default class Selectors {
             const onLine = rowLabel.isOnLine(e.clientX, e.clientY);
             if (onLine !== -1) {
                 if (this.interactionContext.mouseOverState == "rowInsert") {
-                    this.cellDataObj.shiftRowKeys(onLine);
-                    this.renderAllDataCanva();
+                    // this.cellDataObj.shiftRowKeys(onLine);
+                    // this.renderAllDataCanva();
                 }
                 else if (this.interactionContext.mouseOverState == "rowResize") {
-                    this.cmdObjState.type = 'rowResize';
-                    this.cmdObjState.oldValue = this.masterHobj.getValue(onLine - 1);
-                    this.cmdObjState.row = onLine - 1;
-                    this.interactionContext.mode = 'resize-row';
-                    this.interactionContext.startY = e.clientY;
-                    this.interactionContext.rowLabel = rowLabel;
-                    this.interactionContext.rowNumber = onLine - 1;
+                    // this.cmdObjState.type = 'rowResize';
+                    // this.cmdObjState.oldValue = this.masterHobj.getValue(onLine - 1);
+                    // this.cmdObjState.row = onLine - 1;
+                    // this.interactionContext.mode = 'resize-row';
+                    // this.interactionContext.startY = e.clientY;
+                    // this.interactionContext.rowLabel = rowLabel;
+                    // this.interactionContext.rowNumber = onLine - 1;
                 }
             }
             else {
                 this.interactionContext.mode = 'rowSelect';
-                this.clearColLabelSelection();
-                this.clearCellSelection();
-                this.rowLabelSelection(e);
+                // this.clearColLabelSelection();
+                // this.clearCellSelection();
+                // this.rowLabelSelection(e);
             }
         }
     }
@@ -181,31 +185,31 @@ export default class Selectors {
         const type = elm.getAttribute('type') || "";
 
         if (ctx.mode === 'resize-row') {
-            document.body.style.cursor = 'row-resize';
-            const dy = Math.floor(e.clientY - ctx.startY);
-            this.cmdObjState.newVal = this.masterHobj.getValue(ctx.rowNumber);
-            this.resizingHandler({ canvaRow: ctx.rowLabel.canvaRowNumber, extra: dy, rowNumber: ctx.rowNumber });
-            ctx.startY = e.clientY;
-            if (this.activeInputRow === ctx.rowNumber)
-                this.inputElem.style.height = this.masterHobj.getValue(ctx.rowNumber) + "px";
-            this.repositionActiveInput();
+            // document.body.style.cursor = 'row-resize';
+            // const dy = Math.floor(e.clientY - ctx.startY);
+            // this.cmdObjState.newVal = this.masterHobj.getValue(ctx.rowNumber);
+            // this.resizingHandler({ canvaRow: ctx.rowLabel.canvaRowNumber, extra: dy, rowNumber: ctx.rowNumber });
+            // ctx.startY = e.clientY;
+            // if (this.activeInputRow === ctx.rowNumber)
+            //     this.inputElem.style.height = this.masterHobj.getValue(ctx.rowNumber) + "px";
+            // this.repositionActiveInput();
         }
 
         else if (ctx.mode === 'resize-col') {
-            document.body.style.cursor = 'col-resize';
-            const dx = Math.floor(e.clientX - ctx.startX);
-            this.cmdObjState.newVal = this.masterWobj.getValue(ctx.colNumber);
-            this.resizingHandler({ canvaCol: ctx.colLabel.canvaColNumber, extra: dx, colNumber: ctx.colNumber });
-            ctx.startX = e.clientX;
-            if (this.activeInputCol === ctx.colNumber)
-                this.inputElem.style.width = this.masterWobj.getValue(ctx.colNumber) + "px";
-            this.repositionActiveInput();
+            // document.body.style.cursor = 'col-resize';
+            // const dx = Math.floor(e.clientX - ctx.startX);
+            // this.cmdObjState.newVal = this.masterWobj.getValue(ctx.colNumber);
+            // this.resizingHandler({ canvaCol: ctx.colLabel.canvaColNumber, extra: dx, colNumber: ctx.colNumber });
+            // ctx.startX = e.clientX;
+            // if (this.activeInputCol === ctx.colNumber)
+            //     this.inputElem.style.width = this.masterWobj.getValue(ctx.colNumber) + "px";
+            // this.repositionActiveInput();
         }
 
         else if (type === "RowLabel" || ctx.mode == "rowSelect") {
             const rowLblElm = document.elementFromPoint(this.mainContainerRect.left + 5, e.clientY);
             if (ctx.mode == "rowSelect") {
-                this.rowLabelSelectionMouseMove({ target: rowLblElm, clientX: e.clientX, clientY: e.clientY });
+                // this.rowLabelSelectionMouseMove({ target: rowLblElm, clientX: e.clientX, clientY: e.clientY });
             }
             else {
                 const rowNum = Number(elm.getAttribute('row'));
@@ -231,8 +235,8 @@ export default class Selectors {
         else if (type === "ColLabel" || ctx.mode == "colSelect") {
             const colLblElm = document.elementFromPoint(e.clientX, this.mainContainerRect.top + 5);
             if (ctx.mode == "colSelect") {
-                console.log("colSelect")
-                this.columnLabelSelectionMouseMove({ target: colLblElm, clientX: e.clientX, clientY: e.clientY })
+                // console.log("colSelect")
+                // this.columnLabelSelectionMouseMove({ target: colLblElm, clientX: e.clientX, clientY: e.clientY })
             }
             else {
                 const colNum = Number(elm.getAttribute('column'));
@@ -673,6 +677,15 @@ export default class Selectors {
 
         this.selectionInstanceArr = [
             new CellSelectionHandler(this.renderAllDataCanva, this.selectionObj, this.renderInputElm.bind(this), this.canvaInstant, this.parent, this.inputDataObj, this.colLabelSelectionObj, this.rowLabelSelectionObj, this.renderAll),
+
+            new ColResizing( this.resizingHandler, this.colLableInstant, this.renderInputElm.bind( this ), this.cmdObjState, this.renderAllDataCanva, this.cellDataObj, this.parent, this.masterWobj ),
+            
+            new RowResizing( this.resizingHandler, this.rowLableInstant, this.renderInputElm.bind( this ), this.cmdObjState, this.renderAllDataCanva, this.cellDataObj, this.parent, this.masterHobj ),
+
+            new RowSelectionHandler( this.clearColLabelSelection.bind( this ), this.clearCellSelection.bind( this ), this.renderAll, this.rowLabelSelectionObj, this.selectionObj, this.rowLableInstant, this.totalCol, this.parent ),
+
+            new ColSelectionHandler( this.clearRowLabelSelection.bind( this ), this.clearCellSelection.bind( this ), this.renderAll, this.colLabelSelectionObj, this.selectionObj, this.colLableInstant, this.totalRow, this.parent )
+
         ];
 
 
