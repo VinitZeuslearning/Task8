@@ -1,6 +1,6 @@
-export class ColSelectionHandler{
+export class ColSelectionHandler {
 
-    constructor( clearRowLabelSelection, clearCellSelection, renderAll,colLabelSelectionObj, selectionObj,colLableInstant, totalRow, parent  ) {
+    constructor(clearRowLabelSelection, clearCellSelection, renderAll, colLabelSelectionObj, selectionObj, colLableInstant, totalRow, parent, rowLabelSelectionObj, startAutoScroll, mainContainer , autoScrollObj ) {
         this.clearRowLabelSelection = clearRowLabelSelection;
         this.clearCellSelection = clearCellSelection
         this.renderAll = renderAll;
@@ -9,21 +9,26 @@ export class ColSelectionHandler{
         this.colLableInstant = colLableInstant;
         this.totalRow = totalRow;
         this.parent = parent;
-        this.selecting =false;
+        this.selecting = false;
+
+        this.rowLabelSelectionObj = rowLabelSelectionObj;
+        this.startAutoScroll = startAutoScroll;
+        this.mainContainer = mainContainer;
+        this.autoScroll = autoScrollObj
     }
 
-    hitTest( e ) {
+    hitTest(e) {
         const elm = document.elementFromPoint(e.clientX, e.clientY);
 
-        const inst = this.colLableInstant.get( Number(elm.getAttribute( 'column' ) ) );
+        const inst = this.colLableInstant.get(Number(elm.getAttribute('column')));
 
-        if ( !inst ) {
+        if (!inst) {
             return false;
         }
 
-        const onLine = inst.isOnLine( e.clientX, e.clientY );
+        const onLine = inst.isOnLine(e.clientX, e.clientY);
 
-        if ( elm.getAttribute( 'type' ) == 'ColLabel' && onLine == -1 ) {
+        if (elm.getAttribute('type') == 'ColLabel' && onLine == -1) {
             return true;
         }
 
@@ -38,7 +43,7 @@ export class ColSelectionHandler{
         };
     }
 
-    mouseDownHandler( e ) {
+    mouseDownHandler(e) {
         const canvaCol = Number(e.target.getAttribute('column'));
         const cnvInst = this.colLableInstant.get(canvaCol);
         if (!cnvInst) return;
@@ -49,16 +54,18 @@ export class ColSelectionHandler{
 
         this.colLabelSelectionObj.start = colNumber
         this.colLabelSelectionObj.end = colNumber
-        this.selectionObj.starRow = 0;
+        this.selectionObj.startRow = 0;
         this.selectionObj.endRow = this.totalRow;
         this.selectionObj.startCol = colNumber;
         this.selectionObj.endCol = colNumber;
         this.selecting = true;
+        this.rowLabelSelectionObj.start = 0;
+        this.rowLabelSelectionObj.end = this.totalRow;
         this.renderAll();
     }
 
-    mouseMoveHandler( e ) {
-        if (!this.selecting ) return;
+    mouseMoveHandler(e) {
+        if (!this.selecting) return;
 
         const elm = document.elementFromPoint(e.clientX, e.clientY);
         const canvaCol = Number(elm.getAttribute('column'));
@@ -72,9 +79,27 @@ export class ColSelectionHandler{
         this.colLabelSelectionObj.end = colNumber;
         this.selectionObj.endCol = colNumber;
         this.renderAll();
+
+        //  console.log( "mouse move of colselection" )
+
+        this.startAutoScroll( this.selectionOnAutoScroll.bind( this ) )
     }
 
-    mouseUpHandler( e ) {
+    selectionOnAutoScroll( x, y ) {
+        const elm = document.elementFromPoint( x , y );
+        const canvaColNum = Number( elm.getAttribute( 'column' ) );
+        const inst  = this.colLableInstant.get(canvaColNum);
+        if ( !inst ) {
+            return;
+        }
+
+        const pos = this.getRelativePos({clientX: x, clientY: y});
+        const colNumber = inst.findCol(pos.x);
+        this.colLabelSelectionObj.end = colNumber;
+        this.selectionObj.endCol = colNumber;
+        this.renderAll();
+    }
+    mouseUpHandler(e) {
         this.selecting = false
     }
 }

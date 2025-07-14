@@ -1,5 +1,5 @@
 export class CellSelectionHandler {
-    constructor(renderCanvaDt, selectionObj, renderInputElm, canvaInstant, parentContainer, inputDataObj, colLabelSelectionObj, rowLabelSelectionObj, renderAll  ) {
+    constructor(renderCanvaDt, selectionObj, renderInputElm, canvaInstant, parentContainer, inputDataObj, colLabelSelectionObj, rowLabelSelectionObj, renderAll, startAutoScroll, mainContainer, autoScrollObj) {
         this.cellSelectionObj = selectionObj;
         this.renderCavaDt = renderCanvaDt;
         this.renderInputElm = renderInputElm;
@@ -13,12 +13,15 @@ export class CellSelectionHandler {
 
         this.renderAll = renderAll;
         this.isMouseDown = false;
+        this.startAutoScroll = startAutoScroll;
+        this.mainContainer = mainContainer;
+        this.autoScroll = autoScrollObj
     }
 
     hitTest(e) {
-        const elm  = document.elementFromPoint( e.clientX, e.clientY );
+        const elm = document.elementFromPoint(e.clientX, e.clientY);
 
-        if ( elm.getAttribute( 'type' ) == "cell" ) {
+        if (elm.getAttribute('type') == "cell") {
             return true;
         }
         return false;
@@ -49,6 +52,7 @@ export class CellSelectionHandler {
     }
 
     mouseDownHandler(e) {
+        this.inputDataObj.commitInputValue()
         const canvaRow = Number(e.target.getAttribute('row'));
         const canvaCol = Number(e.target.getAttribute('column'));
         const cnvInst = this.canvaInstant.get(canvaRow, canvaCol);
@@ -69,20 +73,22 @@ export class CellSelectionHandler {
         this.rowLabelSelectionObj.end = this.cellSelectionObj.endRow;
         this.colLabelSelectionObj.start = this.cellSelectionObj.startCol
         this.colLabelSelectionObj.end = this.cellSelectionObj.endCol;
-        this.renderAll();
-
-        this.inputDataObj.activeInputRow = row;
+         this.inputDataObj.activeInputRow = row;
         this.inputDataObj.activeInputCol = col;
-        this.renderInputElm();
+        this.renderAll();
         this.isMouseDown = true;
     }
 
     mouseMoveHandler(e) {
-        if ( !this.isMouseDown ) { return }
-        const canvaRow = Number(e.target.getAttribute('row'));
-        const canvaCol = Number(e.target.getAttribute('column'));
-         const cnvInst = this.canvaInstant.get(canvaRow, canvaCol);
+
+        if (!this.isMouseDown) { return }
+        const elm = document.elementFromPoint(e.clientX, e.clientY);
+        const canvaRow = Number(elm.getAttribute('row'));
+        const canvaCol = Number(elm.getAttribute('column'));
+        const cnvInst = this.canvaInstant.get(canvaRow, canvaCol);
         if (!cnvInst) return;
+
+
 
         const pos = this.getRelativePos(e);
         const cell = cnvInst.getCellAtPosition(pos.x, pos.y);
@@ -95,7 +101,34 @@ export class CellSelectionHandler {
         this.rowLabelSelectionObj.end = cell.row;
 
         this.renderAll();
+
+
+        this.startAutoScroll( this.selectionOnAutoScroll.bind( this ));
     }
+
+    selectionOnAutoScroll(x, y) {
+        const elm = document.elementFromPoint(x, y);
+        const canvaRow = Number(elm.getAttribute('row'));
+        const canvaCol = Number(elm.getAttribute('column'));
+        const cnvInst = this.canvaInstant.get(canvaRow, canvaCol);
+        if (!cnvInst) return;
+
+
+
+        const pos = this.getRelativePos({clientX: x , clientY: y});
+        const cell = cnvInst.getCellAtPosition(pos.x, pos.y);
+        if (!cell) return;
+
+        this.cellSelectionObj.endRow = cell.row;
+        this.cellSelectionObj.endCol = cell.col;
+
+        this.colLabelSelectionObj.end = cell.col;
+        this.rowLabelSelectionObj.end = cell.row;
+
+        this.renderAll();
+    }
+
+
 
     mouseUpHandler() {
         this.isMouseDown = false

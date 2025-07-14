@@ -67,9 +67,7 @@ export default class Selectors {
         this.scrollEndHandler = null;
 
         this.cmdObj = null;
-        this.inputDataObj = { activeInputRow: null, activeInputCol: null };
-
-
+        this.inputDataObj = { activeInputRow: null, activeInputCol: null, commitInputValue:   this.commitInputValue.bind( this ) };
         this.mouseDownHandlers = new Map();
         this.mouseUpHandlers = new Map();
         this.mouseMoveHandlers = new Map();
@@ -93,17 +91,8 @@ export default class Selectors {
         };
     }
 
-    getRelativePos(e) {
-        const rect = this.parent.getBoundingClientRect();
-        return {
-            x: e.clientX + this.parent.scrollLeft - rect.left,
-            y: e.clientY + this.parent.scrollTop - rect.top
-        };
-    }
 
     handleMouseDown(e) {
-
-        // Todo have to do this for all selections features
 
         for (const elm of this.selectionInstanceArr) {
             if (elm.hitTest(e)) {
@@ -115,169 +104,69 @@ export default class Selectors {
 
         this.mouseDown = true;
         this.BasicMathFuncs.clearTempResults();
-        const type = e.target.getAttribute('type');
-        if (type === 'ColLabel') {
-            const colNum = Number(e.target.getAttribute('column'));
-            const colLabel = this.colLableInstant.get(colNum);
-            const onLine = colLabel.isOnLine(e.clientX, e.clientY);
-            if (onLine !== -1) {
-                if (this.interactionContext.mouseOverState == 'colInsert') {
-                    // this.cellDataObj.shiftColKeys(onLine);
-                    // this.renderAllDataCanva();
-                }
-                else if (this.interactionContext.mouseOverState == 'colResize') {
-                    // this.cmdObjState.type = 'colResize';
-                    // this.cmdObjState.oldValue = this.masterWobj.getValue(onLine - 1);
-                    // this.cmdObjState.col = onLine - 1;
-                    // this.interactionContext.mode = 'resize-col';
-                    // this.interactionContext.startX = e.clientX;
-                    // this.interactionContext.colLabel = colLabel;
-                    // this.interactionContext.colNumber = onLine - 1;
-                }
-            }
-            else {
-                // this.interactionContext.mode = 'colSelect';
-                // this.clearCellSelection();
-                // this.clearRowLabelSelection();
-                // this.columnLabelSelection(e)
-            }
-        }
-        if (type === 'RowLabel') {
-            const rowNum = Number(e.target.getAttribute('row'));
-            const rowLabel = this.rowLableInstant.get(rowNum);
-            const onLine = rowLabel.isOnLine(e.clientX, e.clientY);
-            if (onLine !== -1) {
-                if (this.interactionContext.mouseOverState == "rowInsert") {
-                    // this.cellDataObj.shiftRowKeys(onLine);
-                    // this.renderAllDataCanva();
-                }
-                else if (this.interactionContext.mouseOverState == "rowResize") {
-                    // this.cmdObjState.type = 'rowResize';
-                    // this.cmdObjState.oldValue = this.masterHobj.getValue(onLine - 1);
-                    // this.cmdObjState.row = onLine - 1;
-                    // this.interactionContext.mode = 'resize-row';
-                    // this.interactionContext.startY = e.clientY;
-                    // this.interactionContext.rowLabel = rowLabel;
-                    // this.interactionContext.rowNumber = onLine - 1;
-                }
-            }
-            else {
-                this.interactionContext.mode = 'rowSelect';
-                // this.clearColLabelSelection();
-                // this.clearCellSelection();
-                // this.rowLabelSelection(e);
-            }
-        }
     }
 
     handleMouseMove(e) {
 
         // Todo have to do this for all selections features
-        if (this.currentHandler != null) {
-            this.currentHandler.mouseMoveHandler(e);
-        }
-
-
+        // console.log("mouse move master")
         this.lastMouseX = e.clientX;
         this.lastMouseY = e.clientY;
+        if (this.currentHandler != null) {
+            // console.log(this.currentHandler)
+            this.currentHandler.mouseMoveHandler(e);
+            return;
+        }
         const elm = document.elementFromPoint(e.clientX, e.clientY);
         const ctx = this.interactionContext;
         const type = elm.getAttribute('type') || "";
 
-        if (ctx.mode === 'resize-row') {
-            // document.body.style.cursor = 'row-resize';
-            // const dy = Math.floor(e.clientY - ctx.startY);
-            // this.cmdObjState.newVal = this.masterHobj.getValue(ctx.rowNumber);
-            // this.resizingHandler({ canvaRow: ctx.rowLabel.canvaRowNumber, extra: dy, rowNumber: ctx.rowNumber });
-            // ctx.startY = e.clientY;
-            // if (this.activeInputRow === ctx.rowNumber)
-            //     this.inputElem.style.height = this.masterHobj.getValue(ctx.rowNumber) + "px";
-            // this.repositionActiveInput();
-        }
 
-        else if (ctx.mode === 'resize-col') {
-            // document.body.style.cursor = 'col-resize';
-            // const dx = Math.floor(e.clientX - ctx.startX);
-            // this.cmdObjState.newVal = this.masterWobj.getValue(ctx.colNumber);
-            // this.resizingHandler({ canvaCol: ctx.colLabel.canvaColNumber, extra: dx, colNumber: ctx.colNumber });
-            // ctx.startX = e.clientX;
-            // if (this.activeInputCol === ctx.colNumber)
-            //     this.inputElem.style.width = this.masterWobj.getValue(ctx.colNumber) + "px";
-            // this.repositionActiveInput();
-        }
-
-        else if (type === "RowLabel" || ctx.mode == "rowSelect") {
+        if (type === "RowLabel" || ctx.mode == "rowSelect") {
             const rowLblElm = document.elementFromPoint(this.mainContainerRect.left + 5, e.clientY);
-            if (ctx.mode == "rowSelect") {
-                // this.rowLabelSelectionMouseMove({ target: rowLblElm, clientX: e.clientX, clientY: e.clientY });
-            }
-            else {
-                const rowNum = Number(elm.getAttribute('row'));
-                const rowLabel = this.rowLableInstant.get(rowNum);
-                const line = rowLabel.isOnLine(e.clientX, e.clientY);
-                if (line != -1) {
-                    const posX = this.getRelativePos(e).x;
-                    if (posX < this.rowLabelWidth / 2) {
-                        document.body.style.cursor = 'crosshair';
-                        ctx.mouseOverState = 'rowInsert'
-                    }
-                    else {
-                        document.body.style.cursor = 'row-resize';
-                        ctx.mouseOverState = 'rowResize';
-                    }
+
+            const rowNum = Number(elm.getAttribute('row'));
+            const rowLabel = this.rowLableInstant.get(rowNum);
+            const line = rowLabel.isOnLine(e.clientX, e.clientY);
+            if (line != -1) {
+                const posX = this.getRelativePos(e).x;
+                if (posX < this.rowLabelWidth / 2) {
+                    document.body.style.cursor = 'crosshair';
+                    ctx.mouseOverState = 'rowInsert'
                 }
                 else {
-                    document.body.style.cursor = 'default'
+                    document.body.style.cursor = 'row-resize';
+                    ctx.mouseOverState = 'rowResize';
                 }
             }
+            else {
+                document.body.style.cursor = 'default'
+            }
+
         }
 
         else if (type === "ColLabel" || ctx.mode == "colSelect") {
-            const colLblElm = document.elementFromPoint(e.clientX, this.mainContainerRect.top + 5);
-            if (ctx.mode == "colSelect") {
-                // console.log("colSelect")
-                // this.columnLabelSelectionMouseMove({ target: colLblElm, clientX: e.clientX, clientY: e.clientY })
-            }
-            else {
-                const colNum = Number(elm.getAttribute('column'));
-                const colLabel = this.colLableInstant.get(colNum);
-                const line = colLabel.isOnLine(e.clientX, e.clientY);
-                if (line != -1) {
-                    const posY = this.getRelativePos(e).y;
-                    if (posY < this.colLabelHeight / 2) {
-                        document.body.style.cursor = 'crosshair';
-                        ctx.mouseOverState = 'colInsert';
-                    }
-                    else {
-                        document.body.style.cursor = 'col-resize';
-                        ctx.mouseOverState = 'colResize';
-                    }
+            const colNum = Number(elm.getAttribute('column'));
+            const colLabel = this.colLableInstant.get(colNum);
+            const line = colLabel.isOnLine(e.clientX, e.clientY);
+            if (line != -1) {
+                const posY = this.getRelativePos(e).y;
+                if (posY < this.colLabelHeight / 2) {
+                    document.body.style.cursor = 'crosshair';
+                    ctx.mouseOverState = 'colInsert';
                 }
                 else {
-                    document.body.style.cursor = 'default'
+                    document.body.style.cursor = 'col-resize';
+                    ctx.mouseOverState = 'colResize';
                 }
             }
+            else {
+                document.body.style.cursor = 'default'
+            }
+
         }
         else {
             document.body.style.cursor = 'default'
-        }
-
-
-        if (this.mouseDown && (ctx.mode == 'rowSelect' || ctx.mode == 'colSelect' || ctx.mode == 'cellSelect')) {
-            const rect = this.mainContainer.getBoundingClientRect();
-            const relX = e.clientX - rect.left;
-            const relY = e.clientY - rect.top;
-            const bufferX = 100;
-            const bufferY = 100;
-
-            this.autoScroll.right = (relX >= rect.width - bufferX);
-            this.autoScroll.left = (relX <= bufferX) && (ctx.mode != "rowSelect");
-            this.autoScroll.down = (relY >= rect.height - bufferY);
-            this.autoScroll.up = (relY <= bufferY) && (ctx.mode != "colSelect");
-            // console.log(this.autoScroll)
-
-            if (this.autoScroll.right || this.autoScroll.left || this.autoScroll.up || this.autoScroll.down)
-                this.startAutoScroll();
         }
 
     }
@@ -301,16 +190,13 @@ export default class Selectors {
     handleMouseUp(e) {
 
         // Todo have to do this for all selections features
-        if ( this.currentHandler != null ) {
+        if (this.currentHandler != null) {
             this.currentHandler.mouseUpHandler(e);
             this.currentHandler = null;
         }
 
-
-
-
         this.isSelecting = false;
-        console.log(`under the mosueUP ${JSON.stringify(this.cmdObjState)}`)
+        // console.log(`under the mosueUP ${JSON.stringify(this.cmdObjState)}`)
         this.mouseDown = false;
 
         if (this.cmdObjState.type == 'colResize') {
@@ -336,43 +222,68 @@ export default class Selectors {
         this.stopAutoScroll();
     }
 
-    startAutoScroll() {
+    startAutoScroll(selectionOnAutoScroll) {
         if (this.autoScrollLoopRunning) return;
-        // console.log("autoScrolled is get called")
+
         this.autoScrollLoopRunning = true;
         const step = 10;
+        const edgeThreshold = 80; // px from edge to start scrolling
+
         const scrollLoop = () => {
+            const rect = this.mainContainer.getBoundingClientRect();
             let scrolled = false;
-            if (this.autoScroll.right) { this.mainContainer.scrollLeft += step; scrolled = true; }
-            if (this.autoScroll.left) { this.mainContainer.scrollLeft -= step; scrolled = true; }
-            if (this.autoScroll.down) { this.mainContainer.scrollTop += step; scrolled = true; }
-            if (this.autoScroll.up) { this.mainContainer.scrollTop -= step; scrolled = true; }
+
+            // Check horizontal scroll limits
+            const canScrollLeft = this.mainContainer.scrollLeft > 0;
+            const canScrollRight = this.mainContainer.scrollLeft < (this.mainContainer.scrollWidth - this.mainContainer.clientWidth);
+
+            // Check vertical scroll limits
+            const canScrollUp = this.mainContainer.scrollTop > 0;
+            const canScrollDown = this.mainContainer.scrollTop < (this.mainContainer.scrollHeight - this.mainContainer.clientHeight);
+
+            // Check if near edges and can scroll
+            if (this.lastMouseX >= rect.right - edgeThreshold && canScrollRight) {
+                this.mainContainer.scrollLeft += step;
+                scrolled = true;
+            }
+            if (this.lastMouseX <= rect.left + edgeThreshold && canScrollLeft) {
+                this.mainContainer.scrollLeft -= step;
+                scrolled = true;
+            }
+            if (this.lastMouseY >= rect.bottom - edgeThreshold && canScrollDown) {
+                this.mainContainer.scrollTop += step;
+                scrolled = true;
+            }
+            if (this.lastMouseY <= rect.top + edgeThreshold && canScrollUp) {
+                this.mainContainer.scrollTop -= step;
+                scrolled = true;
+            }
+
             if (scrolled) {
-                const syntheticEvent = new MouseEvent("mousemove", {
-                    clientX: this.lastMouseX,
-                    clientY: this.lastMouseY,
-                    bubbles: true
-                });
-                this.parent.dispatchEvent(syntheticEvent);
+                // Dispatch synthetic mousemove event to continue interactions
+                selectionOnAutoScroll(this.lastMouseX, this.lastMouseY);
                 this.autoScrollRAF = requestAnimationFrame(scrollLoop);
             } else {
-                this.stopAutoScroll();
+                this.autoScrollLoopRunning = false;
+                cancelAnimationFrame(this.autoScrollRAF);
             }
         };
+
         this.autoScrollRAF = requestAnimationFrame(scrollLoop);
     }
 
+
     commitInputValue() {
 
-        const row = this.activeInputRow;
-        const col = this.activeInputCol;
+        const row = this.inputDataObj.activeInputRow;
+        const col = this.inputDataObj.activeInputCol;
         if (row !== undefined && col !== undefined) {
             const value = this.inputElem.value;
             const existingValue = this.cellDataObj.get(row, col);
             if (value == existingValue) {
                 return;
             }
-            console.log(`commithign value ${value}`)
+            // console.log(`commithign value ${value}`)
             this.cmdObj.pushCellDataCmd(value, existingValue, row, col);
             if (value !== existingValue) {
                 this.cellDataObj.set(row, col, value);
@@ -551,7 +462,7 @@ export default class Selectors {
         // Calculate affected canvas indices
         const startCnv = Math.floor(rowNumber / this.rowNumberPerCanva) - 1;
         const endCnv = Math.floor(rowNumber / this.rowNumberPerCanva) + 1;
-        console.log(this.rowLabelSelectionObj)
+        // console.log(this.rowLabelSelectionObj)
 
         this.renderCanvaSelection({ startRow: startCnv, endRow: endCnv })
         // const inst = this.colLableInstant.get(  Math.floor( colNumber / this.colNumberPerCanva ) );
@@ -634,6 +545,8 @@ export default class Selectors {
             }.bind(this), 300); // wait 300ms after last keystroke
         });
 
+
+        this.inputDataObj.inputElm = this.inputElem;
         const undoElm = document.getElementById('Undo')
         const redoElm = document.getElementById('Redo')
 
@@ -676,15 +589,15 @@ export default class Selectors {
         // Todo have to do this for all selections features
 
         this.selectionInstanceArr = [
-            new CellSelectionHandler(this.renderAllDataCanva, this.selectionObj, this.renderInputElm.bind(this), this.canvaInstant, this.parent, this.inputDataObj, this.colLabelSelectionObj, this.rowLabelSelectionObj, this.renderAll),
+            new CellSelectionHandler(this.renderAllDataCanva, this.selectionObj, this.renderInputElm.bind(this), this.canvaInstant, this.parent, this.inputDataObj, this.colLabelSelectionObj, this.rowLabelSelectionObj, this.renderAll, this.startAutoScroll.bind(this), this.mainContainer, this.autoScroll),
 
-            new ColResizing( this.resizingHandler, this.colLableInstant, this.renderInputElm.bind( this ), this.cmdObjState, this.renderAllDataCanva, this.cellDataObj, this.parent, this.masterWobj ),
-            
-            new RowResizing( this.resizingHandler, this.rowLableInstant, this.renderInputElm.bind( this ), this.cmdObjState, this.renderAllDataCanva, this.cellDataObj, this.parent, this.masterHobj ),
+            new ColResizing(this.resizingHandler, this.colLableInstant, this.renderInputElm.bind(this), this.cmdObj, this.renderAllDataCanva, this.cellDataObj, this.parent, this.masterWobj),
 
-            new RowSelectionHandler( this.clearColLabelSelection.bind( this ), this.clearCellSelection.bind( this ), this.renderAll, this.rowLabelSelectionObj, this.selectionObj, this.rowLableInstant, this.totalCol, this.parent ),
+            new RowResizing(this.resizingHandler, this.rowLableInstant, this.renderInputElm.bind(this), this.cmdObj, this.renderAllDataCanva, this.cellDataObj, this.parent, this.masterHobj),
 
-            new ColSelectionHandler( this.clearRowLabelSelection.bind( this ), this.clearCellSelection.bind( this ), this.renderAll, this.colLabelSelectionObj, this.selectionObj, this.colLableInstant, this.totalRow, this.parent )
+            new RowSelectionHandler(this.clearColLabelSelection.bind(this), this.clearCellSelection.bind(this), this.renderAll, this.rowLabelSelectionObj, this.selectionObj, this.rowLableInstant, this.totalCol, this.parent, this.colLabelSelectionObj, this.startAutoScroll.bind(this), this.mainContainer, this.autoScroll),
+
+            new ColSelectionHandler(this.clearRowLabelSelection.bind(this), this.clearCellSelection.bind(this), this.renderAll, this.colLabelSelectionObj, this.selectionObj, this.colLableInstant, this.totalRow, this.parent, this.rowLabelSelectionObj, this.startAutoScroll.bind(this), this.mainContainer, this.autoScroll)
 
         ];
 
@@ -723,20 +636,20 @@ export default class Selectors {
     }
 
     renderInputElm() {
-        let RowInst = this.rowLableInstant.get(Math.floor(this.activeInputRow / this.rowNumberPerCanva));
-        let ColInst = this.colLableInstant.get(Math.floor(this.activeInputCol / this.colNumberPerCanva));
+        let RowInst = this.rowLableInstant.get(Math.floor(this.inputDataObj.activeInputRow / this.rowNumberPerCanva));
+        let ColInst = this.colLableInstant.get(Math.floor(this.inputDataObj.activeInputCol / this.colNumberPerCanva));
         if (!RowInst || !ColInst) {
             return;
         }
-        let y = RowInst.getRowPosition(this.activeInputRow)
-        let x = ColInst.getColPosition(this.activeInputCol)
+        let y = RowInst.getRowPosition(this.inputDataObj.activeInputRow)
+        let x = ColInst.getColPosition(this.inputDataObj.activeInputCol)
         this.inputElem.style.top = y + "px";
         this.inputElem.style.left = x + "px";
 
-        this.inputElem.style.height = this.masterHobj.getValue(this.activeInputRow) + "px";
-        this.inputElem.style.width = this.masterWobj.getValue(this.activeInputCol) + "px";
+        this.inputElem.style.height = this.masterHobj.getValue(this.inputDataObj.activeInputRow) + "px";
+        this.inputElem.style.width = this.masterWobj.getValue(this.inputDataObj.activeInputCol) + "px";
 
-        this.inputElem.value = this.cellDataObj.get(this.activeInputRow, this.activeInputCol)
+        this.inputElem.value = this.cellDataObj.get(this.inputDataObj.activeInputRow, this.inputDataObj.activeInputCol)
 
     }
 }

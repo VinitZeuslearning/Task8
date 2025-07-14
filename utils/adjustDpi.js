@@ -15,7 +15,7 @@ export default function adjustCanvasDPI(canvaElm, ctx) {
     canvaElm.width = Math.round( cssWidth * dpr );
     canvaElm.height = Math.round( cssHeight * dpr );
 
-    console.log(`height ${cssHeight} width ${cssWidth}`)
+    // console.log(`height ${cssHeight} width ${cssWidth}`)
 
     // Set the CSS size so it stays visually the same size on screen
     canvaElm.style.width = `${cssWidth}px`;

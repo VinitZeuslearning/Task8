@@ -1,16 +1,16 @@
 export class RowResizing {
-    constructor(resizingHandler, rowLabelInstance, repositionActiveInput, cmdObjState, renderAllDataCanva, cellDataObj, parent, masterHobj) {
+    constructor(resizingHandler, rowLabelInstance, renderInputElm, cmdObj, renderAllDataCanva, cellDataObj, parent, masterHobj) {
         this.resizing = false;
         this.resizingHandler = resizingHandler;
-        this.rowLabelInstance = rowLabelInstance;
-        this.repositionActiveInput = repositionActiveInput;
-        this.cmdObjState = cmdObjState;
+        this.renderInputElm = renderInputElm;
+        this.cmdObj = cmdObj;
         this.renderAllDataCanva = renderAllDataCanva;
         this.interactionContext = {
             startX: 0,
             startY: 0,
             rowLabel: null,
-            rowNumber: null
+            rowNumber: null,
+            oldValue : null,
         }
         this.cellDataObj = cellDataObj;
         this.rowLabelHeight = 20;
@@ -58,10 +58,8 @@ export class RowResizing {
                 this.renderAllDataCanva();
             }
             else {
-                this.cmdObjState.type = 'rowResize';
-                this.cmdObjState.oldValue = this.masterHobj.getValue(onLine - 1);
-                this.cmdObjState.row = onLine - 1;
                 this.interactionContext.mode = 'resize-row';
+                this.interactionContext.oldValue = this.masterHobj.getValue( onLine - 1 )
                 this.interactionContext.startY = e.clientY;
                 this.interactionContext.rowLabel = rowLabel;
                 this.interactionContext.rowNumber = onLine - 1;
@@ -73,6 +71,7 @@ export class RowResizing {
 
     mouseUpHandler(e) {
         this.resizing = false;
+        this.cmdObj.pushResizeRowCmd( this.masterHobj.getValue( this.interactionContext.rowNumber ), this.interactionContext.oldValue, this.interactionContext.rowNumber )
     }
 
     mouseMoveHandler(e) {
@@ -85,12 +84,11 @@ export class RowResizing {
 
         document.body.style.cursor = 'row-resize';
         const dy = Math.floor(e.clientY - ctx.startY);
-        this.cmdObjState.newVal = this.masterHobj.getValue(ctx.rowNumber);
         this.resizingHandler({ canvaRow: ctx.rowLabel.canvaRowNumber, extra: dy, rowNumber: ctx.rowNumber });
         ctx.startY = e.clientY;
         if (this.activeInputRow === ctx.rowNumber)
             this.inputElem.style.height = this.masterHobj.getValue(ctx.rowNumber) + "px";
-        this.repositionActiveInput();
+        this.renderInputElm();
     }
 
 }

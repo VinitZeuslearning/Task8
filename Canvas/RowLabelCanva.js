@@ -44,7 +44,7 @@ export default class RowLabelCanva {
      */
     render() {
         // Get current canvas height from row manager
-        console.log(`redering rowlabel canva ${this.canvaRowNumber}`)
+        // console.log(`redering rowlabel canva ${this.canvaRowNumber}`)
         this.height = this.rowMobj.cnvdM.getValue(this.canvaRowNumber);
 
         // Update canvas DOM size

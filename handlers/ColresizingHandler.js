@@ -1,16 +1,17 @@
 export class ColResizing {
-    constructor(resizingHandler, colLabelInstance, repositionActiveInput, cmdObjState, renderAllDataCanva, cellDataObj, parent, masterWobj) {
+    constructor(resizingHandler, colLabelInstance, renderInputElm, cmdObj, renderAllDataCanva, cellDataObj, parent, masterWobj) {
         this.resizing = false;
         this.resizingHandler = resizingHandler;
         this.colLableInstant = colLabelInstance;
-        this.repositionActiveInput = repositionActiveInput;
-        this.cmdObjState = cmdObjState;
+        this.renderInputElm = renderInputElm;
+        this.cmdObj = cmdObj;
         this.renderAllDataCanva = renderAllDataCanva;
         this.interactionContext = {
             startX: 0,
             startY: 0,
             colLabel: null,
-            colNumber: null
+            colNumber: null,
+            oldValue: null,
         }
         this.cellDataObj = cellDataObj;
         this.colLabelHeight = 20;
@@ -51,6 +52,7 @@ export class ColResizing {
         const colNum = Number(e.target.getAttribute('column'));
         const colLabel = this.colLableInstant.get(colNum);
         const onLine = colLabel.isOnLine(e.clientX, e.clientY);
+        this.interactionContext.oldValue = this.masterWobj.getValue()
 
         if (onLine !== -1) {
             const posY = this.getRelativePos(e).y;
@@ -59,36 +61,22 @@ export class ColResizing {
                 this.renderAllDataCanva();
             }
             else{
-                this.cmdObjState.type = 'colResize';
-                this.cmdObjState.oldValue = this.masterWobj.getValue(onLine - 1);
-                this.cmdObjState.col = onLine - 1;
+                this.interactionContext.oldValue = this.masterWobj.getValue(onLine - 1);
                 this.interactionContext.mode = 'resize-col';
                 this.interactionContext.startX = e.clientX;
                 this.interactionContext.colLabel = colLabel;
                 this.interactionContext.colNumber = onLine - 1;
 
                 this.resizing = true;
-            }
-            // if (this.interactionContext.mouseOverState == 'colInsert') {
-            //     this.cellDataObj.shiftColKeys(onLine);
-            //     this.renderAllDataCanva();
-            // }
-            // else if (this.interactionContext.mouseOverState == 'colResize') {
-            //     this.cmdObjState.type = 'colResize';
-            //     this.cmdObjState.oldValue = this.masterWobj.getValue(onLine - 1);
-            //     this.cmdObjState.col = onLine - 1;
-            //     this.interactionContext.mode = 'resize-col';
-            //     this.interactionContext.startX = e.clientX;
-            //     this.interactionContext.colLabel = colLabel;
-            //     this.interactionContext.colNumber = onLine - 1;
-
-            //     this.resizing = true;
-            // }
+            } 
         }
     }
 
     mouseUpHandler(e) {
         this.resizing = false;
+        const newVal = this.masterWobj.getValue( this.interactionContext.colNumber );
+
+        this.cmdObj.pushResizeColCmd( newVal, this.interactionContext.oldValue, this.interactionContext.colNumber );
     }
 
     mouseMoveHandler(e) {
@@ -102,12 +90,11 @@ export class ColResizing {
         if (this.resizing) {
             document.body.style.cursor = 'col-resize';
             const dx = Math.floor(e.clientX - ctx.startX);
-            this.cmdObjState.newVal = this.masterWobj.getValue(ctx.colNumber);
             this.resizingHandler({ canvaCol: ctx.colLabel.canvaColNumber, extra: dx, colNumber: ctx.colNumber });
             ctx.startX = e.clientX;
             if (this.activeInputCol === ctx.colNumber)
                 this.inputElem.style.width = this.masterWobj.getValue(ctx.colNumber) + "px";
-            this.repositionActiveInput();
+            this.renderInputElm();
         }
 
         const colNum = Number(elm.getAttribute('column'));

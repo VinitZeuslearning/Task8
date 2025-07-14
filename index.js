@@ -184,7 +184,6 @@ class CanvasManager {
         }
     }
 
-
     removeRow(r, isLabel = true) {
         if (r < 0 || r >= this.totalCanvaVer) {
             return;
@@ -203,7 +202,6 @@ class CanvasManager {
             this.removeRowLabel(r);
         }
     }
-
 
     removeCol(c, isLabel = true) {
         if (c < 0 || c >= this.totalCanvaHor) {

@@ -21,7 +21,7 @@ function generateDummyUserData(count, filePath) {
     }
 
     fs.writeFileSync(path.resolve(filePath), JSON.stringify(data, null, 2), 'utf-8');
-    console.log(`Dummy data for ${count} users has been written to ${filePath}`);
+    // console.log(`Dummy data for ${count} users has been written to ${filePath}`);
 }
 
 // Example: Generate 10 users and write to data.json

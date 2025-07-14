@@ -60,7 +60,7 @@ import CellData from "../DataStructure/CellData.js";
             undo : function () {
                 let c = col;
                 let ov = oldValue;
-                console.log(`undoing colLabel ${col} to value ${oldValue}`)
+                // console.log(`undoing colLabel ${col} to value ${oldValue}`)
                 this.masterWm.update( c, ov );
             }.bind(this),
             redo : function () {
